@@ -1,0 +1,30 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Fri Apr 19 15:16:04 2024
+
+@author: filip
+"""
+
+import numpy as np
+
+def generate_dataset(num_samples):
+    # Randomly generate currents I1 and I2 within a reasonable range
+    I1 = np.random.uniform(-1, 1, num_samples)  # Current I1 range from -1 to 1 A
+    I2 = np.random.uniform(-1, 1, num_samples)  # Current I2 range from -1 to 1 A
+
+    # Calculate VD1 and VD2 based on the given formulas
+    VD1 = 0.15 * I1 + 0.20 * I2
+    VD2 = 0.25 * I1 + 0.10 * I2
+
+    # Combine I1 and I2 into a single input feature matrix, and VD1 and VD2 into a targets matrix
+    X = np.column_stack((I1, I2, np.zeros([num_samples,1])))
+    Y = np.column_stack((VD1, VD2))
+
+    return X, Y
+
+X, Y = generate_dataset(10)
+print(X)
+# Example of generating a dataset with 100 samples
+
+# Print the first 5 examples to see the data

@@ -3,66 +3,14 @@ from read_and_organise import *
 
 
 ##SIMPLE ONE LINE VERSION
-def modify_netlist_general(original_file_path, new_file_path, X_vec, Y_vec, cond_update, modes, beta, losses, outputs, node_to_inudge):
-    # Ensure modes is a list to simplify processing
-    if not isinstance(modes, list):
-        modes = [modes]
-
-    # Convert X_vec to a list if it is a scalar
-    if not isinstance(X_vec, list):
-        X_vec = [X_vec] * len(outputs)  # Assume the length of outputs matches the needed length of X_vec
-
-    # Read the original netlist file
-    with open(original_file_path, 'r') as file:
-        lines = file.readlines()
-
-    # Process and modify lines
-    modified_lines = []
-    
-    for line in lines:
-        # Process only lines that start with "parameters"
-        if line.strip().startswith("parameters"):
-            parts = line.split()
-
-            # Update Vdc values if requested
-            if 'Vdc' in modes:
-                for i, vdc_value in enumerate(X_vec, start=1):
-                    parts = [f'Vdc{i}={vdc_value}' if part.startswith(f'Vdc{i}=') else part for part in parts]
-
-            # Update Inudge value if requested
-            if 'Inudge' in modes:
-                parts = update_inudge_values(parts, node_to_inudge, outputs, losses, beta)
-
-            # Update deltaR values if requested
-            if 'deltaR' in modes:
-                for update in cond_update:
-                    res_name = update['resistor']  # Get the resistor name
-                    delta = update['cond_update']  # Get the corresponding delta value
-                    for i, part in enumerate(parts):
-                        if part.startswith(res_name + '='):
-                            original_value = float(part.split('=')[1])
-                            new_value = original_value - (1/original_value**2) * delta * 10
-                            parts[i] = f'{res_name}={new_value}'
-                            break  # Found and updated resistor, move to next
-
-            # Replace the line with updated parts
-            line = ' '.join(parts) + '\n'
-
-        # Append the processed or unprocessed line to modified_lines
-        modified_lines.append(line)
-
-    # Write the modified content to a new file
-    with open(new_file_path, 'w') as file:
-        file.writelines(modified_lines)
-
-    print(f'Modified netlist saved to {new_file_path}')
-
-
-
 # def modify_netlist_general(original_file_path, new_file_path, X_vec, Y_vec, cond_update, modes, beta, losses, outputs, node_to_inudge):
 #     # Ensure modes is a list to simplify processing
 #     if not isinstance(modes, list):
 #         modes = [modes]
+
+#     # Convert X_vec to a list if it is a scalar
+#     if not isinstance(X_vec, list):
+#         X_vec = [X_vec] * len(outputs)  # Assume the length of outputs matches the needed length of X_vec
 
 #     # Read the original netlist file
 #     with open(original_file_path, 'r') as file:
@@ -70,63 +18,115 @@ def modify_netlist_general(original_file_path, new_file_path, X_vec, Y_vec, cond
 
 #     # Process and modify lines
 #     modified_lines = []
-#     in_parameters_block = False
-#     block_lines = []
-
+    
 #     for line in lines:
-#         # Check if the line contains the start of the parameters block
-#         if '//start parameters' in line:
-#             in_parameters_block = True
-#             block_lines.append(line)
-#             continue
+#         # Process only lines that start with "parameters"
+#         if line.strip().startswith("parameters"):
+#             parts = line.split()
 
-#         # Check if the line contains the end of the parameters block
-#         if '//end parameters' in line:
-#             in_parameters_block = False
-#             block_lines.append(line)
+#             # Update Vdc values if requested
+#             if 'Vdc' in modes:
+#                 for i, vdc_value in enumerate(X_vec, start=1):
+#                     parts = [f'Vdc{i}={vdc_value}' if part.startswith(f'Vdc{i}=') else part for part in parts]
 
-#             # Process the collected lines in the block
-#             for block_line in block_lines:
-#                 parts = block_line.split()
+#             # Update Inudge value if requested
+#             if 'Inudge' in modes:
+#                 parts = update_inudge_values(parts, node_to_inudge, outputs, losses, beta)
 
-#                 # Update Vdc values if requested
-#                 if 'Vdc' in modes:
-#                     for i, vdc_value in enumerate(X_vec, start=1):
-#                         parts = [f'Vdc{i}={vdc_value}' if part.startswith(f'Vdc{i}=') else part for part in parts]
+#             # Update deltaR values if requested
+#             if 'deltaR' in modes:
+#                 for update in cond_update:
+#                     res_name = update['resistor']  # Get the resistor name
+#                     delta = update['cond_update']  # Get the corresponding delta value
+#                     for i, part in enumerate(parts):
+#                         if part.startswith(res_name + '='):
+#                             original_value = float(part.split('=')[1])
+#                             new_value = original_value - (1/original_value**2) * delta * 10
+#                             parts[i] = f'{res_name}={new_value}'
+#                             break  # Found and updated resistor, move to next
 
-#                 # Update Inudge value if requested
-#                 if 'Inudge' in modes:
-#                     parts = update_inudge_values(parts, node_to_inudge, outputs, losses, beta)
+#             # Replace the line with updated parts
+#             line = ' '.join(parts) + '\n'
 
-#                 # Update deltaR values if requested
-#                 if 'deltaR' in modes:
-#                     for update in cond_update:
-#                         res_name = update['resistor']  # Get the resistor name
-#                         delta = update['cond_update']  # Get the corresponding delta value
-#                         for i, part in enumerate(parts):
-#                             if part.startswith(res_name + '='):
-#                                 original_value = float(part.split('=')[1])
-#                                 new_value = original_value + (1/original_value**2)*delta
-#                                 parts[i] = f'{res_name}={new_value}'
-#                                 break  # Found and updated resistor, move to next
-
-#                 modified_lines.append(' '.join(parts) + '\n')
-
-#             # Clear block_lines after processing
-#             block_lines = []
-#             continue
-
-#         # If in parameters block, add line to block_lines
-#         if in_parameters_block:
-#             block_lines.append(line)
-#         else:
-#             modified_lines.append(line)
+#         # Append the processed or unprocessed line to modified_lines
+#         modified_lines.append(line)
 
 #     # Write the modified content to a new file
 #     with open(new_file_path, 'w') as file:
 #         file.writelines(modified_lines)
 
 #     print(f'Modified netlist saved to {new_file_path}')
+
+
+
+def modify_netlist_general(original_file_path, new_file_path, X_vec, Y_vec, cond_update, modes, beta, losses, outputs, node_to_inudge):
+    # Ensure modes is a list to simplify processing
+    if not isinstance(modes, list):
+        modes = [modes]
+
+    # Read the original netlist file
+    with open(original_file_path, 'r') as file:
+        lines = file.readlines()
+
+    # Process and modify lines
+    modified_lines = []
+    in_parameters_block = False
+    block_lines = []
+
+    for line in lines:
+        # Check if the line contains the start of the parameters block
+        if '//start parameters' in line:
+            in_parameters_block = True
+            block_lines.append(line)
+            continue
+
+        # Check if the line contains the end of the parameters block
+        if '//end parameters' in line:
+            in_parameters_block = False
+            block_lines.append(line)
+
+            # Process the collected lines in the block
+            for block_line in block_lines:
+                parts = block_line.split()
+
+                # Update Vdc values if requested
+                if 'Vdc' in modes:
+                    for i, vdc_value in enumerate(X_vec, start=1):
+                        parts = [f'Vdc{i}={vdc_value}' if part.startswith(f'Vdc{i}=') else part for part in parts]
+
+                # Update Inudge value if requested
+                if 'Inudge' in modes:
+                    parts = update_inudge_values(parts, node_to_inudge, outputs, losses, beta)
+
+                # Update deltaR values if requested
+                if 'deltaR' in modes:
+                    for update in cond_update:
+                        res_name = update['resistor']  # Get the resistor name
+                        delta = update['cond_update']  # Get the corresponding delta value
+                        for i, part in enumerate(parts):
+                            if part.startswith(res_name + '='):
+                                original_value = float(part.split('=')[1])
+                                new_value = original_value + (1/original_value**2)*delta
+                                parts[i] = f'{res_name}={new_value}'
+                                break  # Found and updated resistor, move to next
+
+                modified_lines.append(' '.join(parts) + '\n')
+
+            # Clear block_lines after processing
+            block_lines = []
+            continue
+
+        # If in parameters block, add line to block_lines
+        if in_parameters_block:
+            block_lines.append(line)
+        else:
+            modified_lines.append(line)
+
+    # Write the modified content to a new file
+    with open(new_file_path, 'w') as file:
+        file.writelines(modified_lines)
+
+    print(f'Modified netlist saved to {new_file_path}')
 
 # def process_parameters_block(current_parameters, X_vec, Y_vec, cond_update, modes, beta, losses, outputs, node_to_inudge):
 #     # Join all parts of a parameter block and split into individual parts
@@ -198,7 +198,7 @@ def calc_deltaR(voltage_matrix_f, voltage_matrix_n, beta):
     resistor_names = voltage_matrix_f['resistor']
     deltaV_f = voltage_matrix_f['deltaV']  # Correctly access data by field name
     deltaV_n = voltage_matrix_n['deltaV']  # Correctly access data by field name
-    cond_update_values= beta * (deltaV_f ** 2 - deltaV_n ** 2) * 10
+    cond_update_values= - 1/beta * (deltaV_f ** 2 - deltaV_n ** 2)
     cond_update_values=np.round(cond_update_values,2)
         # Define the dtype for the new structured array
     dtype = [('resistor', 'U10'), ('cond_update', 'f8')]

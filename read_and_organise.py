@@ -98,7 +98,7 @@ def read_all_results(psf_ascii_results, nodes):
     results_matrix = np.column_stack(results)
     return results_matrix
             
-def loss_function(psf_ascii_results, Y_vec, outputs):
+def loss_function(psf_ascii_results, Y_vec, outputs): ## can be improved to not open results files again
     psf = PSF(psf_ascii_results)
     losses=[]
     for output in outputs:
@@ -108,7 +108,7 @@ def loss_function(psf_ascii_results, Y_vec, outputs):
             if isinstance(Y_vec, (list, np.ndarray)):
                 loss = Y_vec[outputs.index(output)] - outputV
             else:
-                loss = Y_vec - outputV  
+                loss = Y_vec - outputV  #target - measured
             losses.append(loss)
         except:
             print(f"Error, no node is named {output}")
@@ -117,8 +117,8 @@ def loss_function(psf_ascii_results, Y_vec, outputs):
     # Convert list of losses to a numpy array
     losses = np.array(losses)
 
-    # Return the mean loss ignoring NaNs
-    return losses  # This computes the mean while ignoring NaN values
+    # Return the mean loss
+    return losses  
 
 
     ## here the result file comes from the psf_reader

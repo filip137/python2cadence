@@ -19,37 +19,50 @@ import subprocess
 import shutil
 import glob
 import datetime
+import random
+from multiprocessing import Process
 
-
-
-def nudged_free_phase(X, Y, input_sample, input_dir_, output_dir_, num_iterations, beta, output_nodes):
+def nudged_free_phase(X, Y, og_input_sample, input_dir_, output_dir_, num_iterations, beta, output_nodes, gamma, init_weights):
     ## gather the data about the network
     # Generate random X (20 columns, 2 rows) and Y (20 elements)
     # Preprocess and read the file content
+    new_sample_file_path = f"{og_input_sample}_modified"
+    input_sample = modify_input_config(og_input_sample, new_sample_file_path, init_weights)
+
+    
     input_dir, output_dir = create_timestamped_dir(input_dir_, output_dir_)
-    resistors_list = create_resistor_list(input_sample, save_as_new=True)
     node_to_inudge = create_node_to_inudge_map(input_sample)
     nudged_input_dir=f"{input_dir}_nudged"
     os.makedirs(nudged_input_dir, exist_ok=True)#directory where all the netlists for the nudged phase are stored 
     nudged_output_dir=f"{output_dir}_nudged"
-    os.makedirs(nudged_output_dir, exist_ok=True)#same for the nudged phase
+    os.makedirs(nudged_output_dir, exist_ok=True)
+    
+    
+    resistors_list = create_resistor_list(input_sample, save_as_new=True)
     modes = ['Vdc']##for the first iteration
-    losses=1
-    cond_update= 1#needs to be initiliazed (also to be fixed in the future)
+    losses=None
+    cond_update= None#needs to be initiliazed (also to be fixed in the future)
     sse_values = []
     all_losses = []
     accumulated_resistances = {}
     my_results=None
+    my_results_nudged=None
     for i in range(0, num_iterations):
         overall_start = time.time()
+        # if X.ndim == 1:
+        #     X_vec=np.round(X[i],2)
+        # else:
         X_vec=np.round(X[i, :],2)
+        # if Y.ndim == 1:
+        #     Y_vec=np.round(Y[i],2)
+        # else:
         Y_vec=np.round(Y[i, :],2)
         new_file_path = f"{input_dir}/input{i + 1}.scs"##where the input files will be stored
         if i==0:
-            modify_netlist_general(input_sample, new_file_path, X_vec, Y_vec, cond_update, modes, beta, losses, output_nodes, node_to_inudge)  # Create the netlist for free phase
+            modify_netlist_general(input_sample, new_file_path, X_vec, Y_vec, cond_update, modes, beta, losses, output_nodes, node_to_inudge, gamma) # Create the netlist for free phase
         else:
             old_file_path = f"{input_dir}/input{i}.scs"
-            modify_netlist_general(old_file_path, new_file_path, X_vec, Y_vec, cond_update, modes, beta, losses, output_nodes, node_to_inudge) 
+            modify_netlist_general(old_file_path, new_file_path, X_vec, Y_vec, cond_update, modes, beta, losses, output_nodes, node_to_inudge, gamma)
         output_directory = f"{output_dir}/output{i + 1}"  # set up output directory
         os.makedirs(output_directory, exist_ok=True) # Creating a new output directory for each iteration is definetly not ideal (cannot supress the results easily though)
         phase=f"free"
@@ -63,7 +76,7 @@ def nudged_free_phase(X, Y, input_sample, input_dir_, output_dir_, num_iteration
         losses=loss_function(result_file_free, Y_vec, output_nodes)#
         new_file_path_nudged=f"{nudged_input_dir}/input_nudged{i + 1}.scs"
         output_directory_nudged = f"{nudged_output_dir}/output{i + 1}"
-        modify_netlist_general(new_file_path, new_file_path_nudged, X_vec, Y_vec, cond_update, modes, beta, losses, output_nodes, node_to_inudge)
+        modify_netlist_general(new_file_path, new_file_path_nudged, X_vec, Y_vec, cond_update, modes, beta, losses, output_nodes, node_to_inudge, gamma)
         phase=f"nudge"
         start_time = time.time()
         run_spectre_simulation(new_file_path_nudged, output_directory_nudged, i, phase) 
@@ -71,7 +84,7 @@ def nudged_free_phase(X, Y, input_sample, input_dir_, output_dir_, num_iteration
         print(f"Time taken for run_spectre_simulation (nudged phase) iteration {i}: {np.round(end_time - start_time,2)} seconds")
         result_file_nudged = os.path.join(output_directory_nudged, "dcOp.dc")  # Collect the results
         voltage_matrix_nudge = read_and_store_results(result_file_nudged, resistors_list)
-        cond_update=calc_deltaR(voltage_matrix_free, voltage_matrix_nudge, beta)
+        cond_update=calc_deltaR(voltage_matrix_free, voltage_matrix_nudge, gamma)
         ## all_iterations_updates.append(cond_update)
         modes = ['Vdc', 'deltaR']
         overall_end = np.round(time.time(),2)
@@ -79,23 +92,36 @@ def nudged_free_phase(X, Y, input_sample, input_dir_, output_dir_, num_iteration
         sse = calculate_sse(losses, X_vec)
         sse_values.append(sse)
         all_losses.append(losses)
-        current_results = read_all_results(result_file_free, output_nodes)    
+        current_results = read_all_results(result_file_free, output_nodes)
+        current_results_nudged = read_all_results(result_file_nudged, output_nodes)
+        
         if my_results is None:
             my_results = current_results
         else:
             my_results = np.vstack((my_results, current_results))
+            
+        if my_results_nudged is None:
+            my_results_nudged = current_results_nudged
+        else:
+            my_results_nudged = np.vstack((my_results_nudged, current_results_nudged))
+            
         resistance_values=read_resistance_values(new_file_path)
         accumulate_resistance_values(resistance_values, accumulated_resistances)
         #resistances_over_time= accumulate_resistance_values(resistance_values, resistances_over_time)
     # plot_resistance_changes(resistances_over_time)
     plot_results_and_Y(my_results, num_iterations, Y)
     plot_sse(sse_values, num_iterations)
+    plot_free_and_nudged(my_results, my_results_nudged, output_nodes)
     plot_resistance_changes(accumulated_resistances)
     # update_and_plot_resistances(all_iterations_updates)
     log_directory = os.path.join(output_dir, "log_files")
     move_simulation_files(os.getcwd(), log_directory, ['.log', '.ahdlSimDB'])#need to be in the directory where python files are for this to work
     
 
+
+
+# Example usage
+# plot_free_and_nudged(np.random.rand(10), np.random.rand(10))
 
 # def main():
 #       X = np.random.rand(20, 2) #need to move this in the inputs
@@ -180,21 +206,7 @@ def nudged_free_phase(X, Y, input_sample, input_dir_, output_dir_, num_iteration
 #     plt.tight_layout()
 #     plt.show()
 
-def create_snapshot(input_file, output_dir_, num_points, beta, output_nodes):
-    X, Y = generate_dataset(num_points)
-    input_dir, output_dir = create_timestamped_dir(input_dir_, output_dir_)
-    modes = ['Vdc']
-    beta, losses, output_nodes, node_to_inudge = None
-    for i in range (0,num_points):
-        X_vec=np.round(X[i, :],2)
-        Y_vec=np.round(X[i, :],2)
-        new_file_path = f"{input_dir}/input{i + 1}.scs"
-        modify_netlist_general(input_file, new_file_path, X_vec, Y_vec, cond_update, modes, beta, losses, output_nodes, node_to_inudge)  # Create the netlist for free phase
-        output_directory = f"{output_dir}/output{i + 1}"  # set up output directory
-        os.makedirs(output_directory, exist_ok=True) # Creating a new output directory for each iteration is definetly not ideal (cannot supress the results easily though)
-        phase=f"free"
-        run_spectre_simulation(new_file_path, output_directory, i, phase)
-        current_results = read_all_results(result_file_free, output_nodes) 
+
 def create_timestamped_dir(input_dir, output_dir):
     # Get the current date and time
     now = datetime.datetime.now()
@@ -212,14 +224,24 @@ def create_timestamped_dir(input_dir, output_dir):
 
 
 def main():
-    X, Y = generate_dataset(150, "zeros")
-    output_nodes=["node2", "node5"]
-    input_sample="/home/filip/CMOS130/simulations/upenn/spectre/schematic/netlist/input.scs"
-    input_dir="/home/filip/CMOS130/simulations/various_tests/upenn_2nd"
-    output_dir="/home/filip/CMOS130/simulations/various_tests/upenn_2nd"
-    beta_a=[0.7]
+    X, Y = generate_dataset(120, "linear_reg")
+    output_nodes=["node5", "node2"]
+    input_sample="/home/filip/CMOS130/simulations/sample_files/input_upenn.scs"
+    input_dir="/home/filip/CMOS130/simulations/various_tests/upenn"
+    output_dir="/home/filip/CMOS130/simulations/various_tests/upenn"
+    beta_a=[0.012]
+    gamma=-0.00013
+    
+    ## random or uniform
+    init_weights=[]
+    for i in range(1, 17): 
+        #resv = random.randint(60,140)
+        resv = 130
+        init_weights.append({'resistor': f'res{i}', 'init_weight': resv})
+    
+    
     for beta in beta_a:
-        nudged_free_phase(X, Y, input_sample,input_dir , output_dir, 50 , beta, output_nodes)
+        nudged_free_phase(X, Y, input_sample,input_dir , output_dir, 2 , beta, output_nodes, gamma, init_weights)
 
     
 

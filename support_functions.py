@@ -28,7 +28,7 @@ def move_simulation_files(source_directory, target_directory, extensions):
         for file in glob.glob(os.path.join(source_directory, f'*{extension}')):
             target_file = os.path.join(target_directory, os.path.basename(file))
             shutil.move(file, target_file)
-            print(f"Moved {file} to {target_file}")
+        #    print(f"Moved {file} to {target_file}")
             
 
 def generate_dataset(num_samples, mode):
@@ -45,24 +45,31 @@ def generate_dataset(num_samples, mode):
         VD1 = np.zeros(num_samples)  
         VD2 = np.zeros(num_samples)    
     # Calculate VD1 and VD2 based on the given formulas
-    #VD1 = 0.15 * V1  + 0.20 * V2 
-    #VD2 = 0.25 * V1  + 0.10 * V2
+    VD1 = 0.15 * V1  + 0.20 * V2 
+    VD2 = 0.25 * V1  + 0.10 * V2
     # VD2=np.ones((num_samples,1))
     # Combine I1 and I2 into a single input feature matrix, and VD1 and VD2 into a targets matrix
-    X = np.column_stack((V1, V2, np.zeros([num_samples,1])))
+    X = np.column_stack((V1, V2, np.zeros([num_samples,1]))) #node4 node6 node7
     Y = np.column_stack((VD1, VD2))
 
     return X, Y
 
-def generate_dataset2(num_samples):
-    # Randomly generate currents I1 and I2 within a reasonable range
-    V1 = np.random.uniform(1, 5, num_samples)  # Current V1 range from 1 to 5 V
-    V2 = 0  # Current V2 range from -1 to 1 V
+def generate_dataset_2input_1output(num_samples, mode):
+    V1 = np.zeros(num_samples)
+    V2 = np.ones(num_samples)*5
+    X = np.column_stack((V1, V2))
+    Y = np.zeros(num_samples)
+    return X, Y
 
-    # VD2=np.ones((num_samples,1))
-    # Combine I1 and I2 into a single input feature matrix, and VD1 and VD2 into a targets matrix
-    X = np.random.uniform(1, 5, num_samples)
-    Y = np.zeros((num_samples,1))
+
+def generate_dataset2(num_samples):
+    # Generate inputs
+
+    X = np.random.uniform(2, 6, num_samples)
+    Y = X/5
+    
+    X = X.reshape(-1, 1)  # Reshape X to be num_samples x 1
+    Y = Y.reshape(-1, 1)  # Reshape Y to be num_samples x 1
 
     return X, Y
 
@@ -202,11 +209,45 @@ def plot_results(data, num_iterations, Y):
     
     # Display the plot
     plt.show()
+    
+def plot_free_and_nudged(my_results_free, my_results_nudged, output_nodes):
+    # Validate input
+    if my_results_free is None or my_results_nudged is None:
+        raise ValueError("Input data cannot be None")
+    if len(my_results_free) != len(my_results_nudged):
+        raise ValueError("Input data must have the same length")
 
+    # Setup plot
+    plt.figure(figsize=(10, 5))
+    n_of_iter = len(my_results_free)  # More robust against non-numpy input
+    x = np.linspace(1, n_of_iter, n_of_iter)
+
+    # Plotting data
+    for i, node in enumerate(output_nodes):
+        plt.plot(x, my_results_free[:, i], label=f'Free Results ({node})')
+        plt.plot(x, my_results_nudged[:, i], label=f'Nudged Results ({node})')
+        plt.plot(x, my_results_free[:, i] - my_results_nudged[:, i], label=f"Difference ({node})")
+    # Adding titles and labels
+    plt.title('Results over Iterations')
+    plt.xlabel('Iteration')
+    plt.ylabel('Measured Value at output')
+
+    # Legend
+    plt.legend(loc='best')  # Improved legend placement
+
+    # Grid
+    plt.grid(True)
+
+    # Display the plot
+    plt.show()
+    
 def plot_results_and_Y(data, num_iterations, Y):
     # Ensure data and Y are NumPy arrays for consistent shape handling
     data = np.array(data)
     Y = np.array(Y[0:num_iterations])
+    Y = np.atleast_2d(Y)
+    if Y.shape[0] == 1:
+        Y = Y.T
 
     if data.ndim == 1:
         data = data.reshape(-1, 1)  # Convert 1D array to 2D array with one column if necessary
@@ -255,4 +296,20 @@ def plot_sse(sse_values, num_iterations):
     
 
 def calculate_sse(losses, X_vec):
-    return np.sum(np.square(losses))/np.sum(np.square(X_vec))
+    return np.sum(np.square(losses))
+
+def create_snapshot(input_file, output_dir_, num_points, beta, output_nodes):
+    X, Y = generate_dataset2(num_points)
+    input_dir, output_dir = create_timestamped_dir(input_dir_, output_dir_)
+    modes = ['Vdc']
+    beta, losses, output_nodes, node_to_inudge = None
+    for i in range (0,num_points):
+        X_vec=np.round(X[i, :],2)
+        Y_vec=np.round(X[i, :],2)
+        new_file_path = f"{input_dir}/input{i + 1}.scs"
+        modify_netlist_general(input_file, new_file_path, X_vec, Y_vec, cond_update, modes, beta, losses, output_nodes, node_to_inudge)  # Create the netlist for free phase
+        output_directory = f"{output_dir}/output{i + 1}"  # set up output directory
+        os.makedirs(output_directory, exist_ok=True) # Creating a new output directory for each iteration is definetly not ideal (cannot supress the results easily though)
+        phase=f"free"
+        run_spectre_simulation(new_file_path, output_directory, i, phase)
+        current_results = read_all_results(result_file_free, output_nodes) 

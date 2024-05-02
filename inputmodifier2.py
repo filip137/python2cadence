@@ -57,9 +57,52 @@ from read_and_organise import *
 
 #     print(f'Modified netlist saved to {new_file_path}')
 
+def modify_input_config(sample_file_path, new_sample_file_path, init_weights):
+    # Read the original netlist file
+    with open(sample_file_path, 'r') as file:
+        lines = file.readlines()
 
+    modified_lines = []
+    in_parameters_block = False
+    block_lines = []
 
-def modify_netlist_general(original_file_path, new_file_path, X_vec, Y_vec, cond_update, modes, beta, losses, outputs, node_to_inudge):
+    for line in lines:
+        if '//start parameters' in line:
+            in_parameters_block = True
+            block_lines.append(line)
+            continue
+
+        if '//end parameters' in line:
+            in_parameters_block = False
+            block_lines.append(line)
+            # Process the collected lines in the block
+            for block_line in block_lines:
+                parts = block_line.split()
+                for res in init_weights:
+                    res_name = res['resistor']  # Get the resistor name
+                    r0 = res['init_weight']  # Get the corresponding initial weight value
+                    for i, part in enumerate(parts):
+                        if part.startswith(res_name + '='):
+                            parts[i] = f'{res_name}={r0}'
+                            break
+                modified_lines.append(' '.join(parts) + '\n')
+            block_lines = []
+            continue
+
+        if in_parameters_block:
+            block_lines.append(line)
+        else:
+            modified_lines.append(line)
+
+    # Write the modified content to a new file
+    with open(new_sample_file_path, 'w') as file:
+        file.writelines(modified_lines)
+
+    print(f'Modified sample file saved to {new_sample_file_path}')
+    
+    return new_sample_file_path
+
+def modify_netlist_general(original_file_path, new_file_path, X_vec, Y_vec, cond_update, modes, beta, losses, outputs, node_to_inudge, gamma):
     # Ensure modes is a list to simplify processing
     if not isinstance(modes, list):
         modes = [modes]
@@ -90,6 +133,11 @@ def modify_netlist_general(original_file_path, new_file_path, X_vec, Y_vec, cond
                 parts = block_line.split()
 
                 # Update Vdc values if requested
+                # if isinstance(X_vec, (list, tuple, np.ndarray)):
+                #     iterable = True
+                # else:
+                #     iterable = False
+                #     X_vec = [X_vec]  # Convert scalar to list for uniform processing
                 if 'Vdc' in modes:
                     for i, vdc_value in enumerate(X_vec, start=1):
                         parts = [f'Vdc{i}={vdc_value}' if part.startswith(f'Vdc{i}=') else part for part in parts]
@@ -106,7 +154,10 @@ def modify_netlist_general(original_file_path, new_file_path, X_vec, Y_vec, cond
                         for i, part in enumerate(parts):
                             if part.startswith(res_name + '='):
                                 original_value = float(part.split('=')[1])
-                                new_value = original_value + (1/original_value**2)*delta
+                                new_value = original_value + (original_value**2)*delta
+                                if new_value < 5:
+                                    new_value = original_value
+                                print(f"the resistance change is {(original_value**2)*delta}")
                                 parts[i] = f'{res_name}={new_value}'
                                 break  # Found and updated resistor, move to next
 
@@ -189,17 +240,18 @@ def update_inudge_values(parts, node_to_inudge, outputs, losses, beta):
     for node, loss in zip(outputs, losses):
         inudge_key = node_to_inudge.get(node)
         if inudge_key:
-            i_nudge = np.round(beta * loss,6)
+            i_nudge = np.round(beta * loss,8)
+            print(f"I nudge is: {i_nudge}")
             parts = [f'{inudge_key}={i_nudge}' if part.startswith(f'{inudge_key}=') else part for part in parts]
     return parts
 
-def calc_deltaR(voltage_matrix_f, voltage_matrix_n, beta):
+def calc_deltaR(voltage_matrix_f, voltage_matrix_n, gamma):
         # Assuming 'resistor' for names and 'deltaV' for voltage differences
     resistor_names = voltage_matrix_f['resistor']
     deltaV_f = voltage_matrix_f['deltaV']  # Correctly access data by field name
     deltaV_n = voltage_matrix_n['deltaV']  # Correctly access data by field name
-    cond_update_values= - 1/beta * (deltaV_f ** 2 - deltaV_n ** 2)
-    cond_update_values=np.round(cond_update_values,2)
+    cond_update_values= gamma * (deltaV_f ** 2 - deltaV_n ** 2)
+    cond_update_values=np.round(cond_update_values,6)
         # Define the dtype for the new structured array
     dtype = [('resistor', 'U10'), ('cond_update', 'f8')]
     cond_update = np.empty(len(resistor_names), dtype=dtype)
@@ -229,19 +281,11 @@ def calc_deltaR(voltage_matrix_f, voltage_matrix_n, beta):
     
     
 if __name__ == "__main__":
-    main()
+    init_weights=[]
+    for i in range(1, 17):
+        init_weights.append({'resistor': f'res{i}', 'init_weight': 100})
+    sample_file_path='/home/filip/CMOS130/simulations/sample_files/input_upenn.scs'
+    new_sample_file_path='/home/filip/CMOS130/simulations/sample_files/input_upenn2.scs'
+    modify_input_config(sample_file_path, new_sample_file_path, init_weights)
 
-#new_file_path = '/home/filip/Documents/tryouts/spectre/schematic/netlist/input_modified3.scs'
-#X = [1, 2]  # Example array of input voltages for Vdc parameters
-#Y = 0.05    # Example scalar value for Inudge
-#beta=0.1
-#original_file_path="/home/filip/Documents/tryouts/11.4/schematic/netlist/input.scs"
-#psf_ascii_results = "/home/filip/Documents/tryouts/11.4/schematic/netlist/input.raw/dcOp.dc"
-#resistors_list=read_input_and_organise(input_file_path, save_as_new=True)
-#voltages_matrix_f=read_and_store_results(psf_ascii_results, resistors_list)
-#voltages_matrix_n=np.copy(voltages_matrix_f)
-#voltages_matrix_n['deltaV']+=1
 
-#cond_update=calc_deltaR(voltages_matrix_f, voltages_matrix_n, 0.1)
-#loss=loss_function(psf_ascii_results, Y)
-#modify_netlist_general(original_file_path, new_file_path, [], 0.05, cond_update, ['Vdc', 'deltaR'], beta, loss)

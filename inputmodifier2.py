@@ -154,10 +154,25 @@ def modify_netlist_general(original_file_path, new_file_path, X_vec, Y_vec, cond
                         for i, part in enumerate(parts):
                             if part.startswith(res_name + '='):
                                 original_value = float(part.split('=')[1])
-                                new_value = original_value + (original_value**2)*delta
+                                original_cond = 1/original_value
+                                ccond_update = gamma/beta * delta
+                                final_cond = original_cond + ccond_update
+                                new_value = np.round(1 / final_cond,2)
+                                r_update=new_value-original_value
+                                # if res_name == "res1" or res_name == "res3":
+                                #     new_value = original_value
+                                #update =  gamma * (original_value * delta)/(1/original_value + delta)
+                                #new_value = original_value + update
+                                # if r_update < -100:
+                                #      new_value = original_value - 100
                                 if new_value < 5:
                                     new_value = original_value
-                                print(f"the resistance change is {(original_value**2)*delta}")
+                                # if new_value < 5:
+                                #     new_value = 5
+                                # if new_value > 10000:
+                                #     new_value = original_value
+                                    
+                                print(f"the resistance change of {part} is {new_value - original_value}")
                                 parts[i] = f'{res_name}={new_value}'
                                 break  # Found and updated resistor, move to next
 
@@ -250,7 +265,7 @@ def calc_deltaR(voltage_matrix_f, voltage_matrix_n, gamma):
     resistor_names = voltage_matrix_f['resistor']
     deltaV_f = voltage_matrix_f['deltaV']  # Correctly access data by field name
     deltaV_n = voltage_matrix_n['deltaV']  # Correctly access data by field name
-    cond_update_values= gamma * (deltaV_f ** 2 - deltaV_n ** 2)
+    cond_update_values= (deltaV_f ** 2 - deltaV_n ** 2)
     cond_update_values=np.round(cond_update_values,6)
         # Define the dtype for the new structured array
     dtype = [('resistor', 'U10'), ('cond_update', 'f8')]

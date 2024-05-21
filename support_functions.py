@@ -12,7 +12,14 @@ import subprocess
 import shutil
 import glob
 import datetime
+from sklearn.datasets import load_iris
+import pandas as pd
 
+def iris_dataset_generator(epoch_size):
+    iris=load_iris()
+    iris_df = pd.DataFrame(data=iris.data, columns=iris.feature_names)
+    
+    
 def move_simulation_files(source_directory, target_directory, extensions):
     # Check if the target directory exists and remove it if it does
     if os.path.exists(target_directory):
@@ -32,10 +39,27 @@ def move_simulation_files(source_directory, target_directory, extensions):
             
 
 def generate_dataset(num_samples, mode):
+    np.random.seed(2)
     # Randomly generate currents I1 and I2 within a reasonable range
     if mode == "linear_reg":
-        V1 = np.random.uniform(1, 5, num_samples)  
-        V2 = np.random.uniform(1, 5, num_samples)  
+        V1 = np.random.uniform(0, 5, num_samples)  
+        V2 = np.random.uniform(0, 5, num_samples)  
+    if mode == "uniform":
+    # Initially create 2-dimensional arrays with half the required samples
+        V1 = np.ones((num_samples // 2, 1)) * 5  
+        V2 = np.ones((num_samples // 2, 1)) * 5 
+    
+    # Generate random data and reshape immediately to match V1 and V2's 2D shape
+        rndm1 = np.random.uniform(1, 5, num_samples // 2).reshape(-1, 1)
+        rndm2 = np.random.uniform(1, 5, num_samples // 2).reshape(-1, 1)
+    
+    # Vertically stack the original and random data
+        V1 = np.vstack((V1, rndm1))
+        V2 = np.vstack((V2, rndm2))
+
+    # Flatten the arrays to make them 1-dimensional
+        V1 = V1.flatten()
+        V2 = V2.flatten()
     if mode == "snapshot":
         V1 = np.linspace(1, 5, num_samples)  
         V2 = np.linspace(1, 5, num_samples)        
@@ -46,10 +70,10 @@ def generate_dataset(num_samples, mode):
         VD2 = np.zeros(num_samples)    
     # Calculate VD1 and VD2 based on the given formulas
     VD1 = 0.15 * V1  + 0.20 * V2 
-    VD2 = 0.25 * V1  + 0.10 * V2
+    VD2 = 0.25 * V1  + 0.1 * V2
     # VD2=np.ones((num_samples,1))
     # Combine I1 and I2 into a single input feature matrix, and VD1 and VD2 into a targets matrix
-    X = np.column_stack((V1, V2, np.zeros([num_samples,1]))) #node4 node6 node7
+    X = np.column_stack((V1, np.zeros([num_samples,1]), V2)) #node1 node4 node7
     Y = np.column_stack((VD1, VD2))
 
     return X, Y
@@ -80,19 +104,72 @@ def accumulate_resistance_values(iteration_resistances, accumulated_resistances)
         else:
             accumulated_resistances[key] = [value]
         
-def plot_resistance_changes(accumulated_resistances):
-    plt.figure(figsize=(10, 6))
-    for resistor, values in accumulated_resistances.items():
-        iterations = range(len(values))
-        plt.plot(iterations, values, label=resistor, marker='o', linestyle='-')
-    
-    plt.title('Resistance Changes Over Iterations')
-    plt.xlabel('Iteration Number')
-    plt.ylabel('Resistance Value (Ohms)')
-    plt.legend()
-    plt.grid(True)
+
+
+# Example usage:
+# resistances_over_time = {'res1': [1, 2, 3], 'res2': [2, 3, 4], 'res3': [3, 4, 5]}
+# all_deltaV_free = [1.0, 1.5, 2.0]
+# all_deltaV_nudge = [0.8, 1.4, 1.9]
+# beta = 0.5
+# resistors_to_plot = ['res1', 'res3']  # Choose which resistors to plot
+# plot_combined(resistances_over_time, all_deltaV_free, all_deltaV_nudge, beta, resistors_to_plot)
+def plot_combined_res_deltaV(resistances_over_time, all_deltaV_free, all_deltaV_nudge, beta, resistors_to_plot):
+    """
+    Plot the resistance values for specified resistors across iterations and the difference of the squares of
+    deltaV values for 'free' and 'nudge' scenarios, each on its own y-axis.
+
+    Args:
+        resistances_over_time (dict): Dictionary where keys are resistor labels (e.g., 'res1', 'res2', etc.)
+                                      and values are lists of resistance values over iterations.
+        all_deltaV_free (list): List of deltaV values from the free scenario.
+        all_deltaV_nudge (list): List of deltaV values from the nudge scenario.
+        beta (float): A parameter for annotation in the plot.
+        resistors_to_plot (list): List of resistor labels to be plotted.
+    """
+    if len(all_deltaV_free) != len(all_deltaV_nudge):
+        raise ValueError("Both lists must have the same number of elements.")
+
+    # Calculate the difference of the squares of the values
+    deltaV_diff_squares = [(x**2 - y**2) for x, y in zip(all_deltaV_nudge, all_deltaV_free)]
+
+    # Create a figure and axis object
+    fig, ax1 = plt.subplots(figsize=(12, 8))
+
+    # Plotting resistance changes for selected resistors on the primary y-axis
+    for resistor in resistors_to_plot:
+        if resistor in resistances_over_time:
+            values = resistances_over_time[resistor]
+            iterations = range(1, len(values) + 1)
+            ax1.plot(iterations, values, marker='o', linestyle='-', label=f"{resistor} Resistance")
+        else:
+            print(f"Warning: {resistor} not found in resistance data.")
+    ax1.set_title(f'Resistance and Delta V Changes for beta={beta}')
+    ax1.set_xlabel('Iteration Number')
+    ax1.set_ylabel('Resistance Value (Ohms)', color='tab:blue')
+    ax1.set_yscale('log')
+    ax1.tick_params(axis='y', labelcolor='tab:blue')
+    ax1.grid(True)
+    ax1.legend(loc='upper left')
+
+    # Create a second y-axis for the difference of squares
+    ax2 = ax1.twinx()
+    ax2.plot(iterations, deltaV_diff_squares, 'r-', marker='s', label='Difference of Squares')
+    ax2.set_ylabel('Difference of Squares', color='tab:red')
+    ax2.tick_params(axis='y', labelcolor='tab:red')
+    ax2.legend(loc='upper right')
+
+    # Show the plot
+    plt.tight_layout()
     plt.show()
-    
+
+# Example usage:
+# resistances_over_time = {'res1': [1, 2, 3], 'res2': [2, 3, 4]}
+# all_deltaV_free = [1.0, 1.5, 2.0]
+# all_deltaV_nudge = [0.8, 1.4, 1.9]
+# beta = 0.5
+# resistors_to_plot = ['res1', 'res2']  # Choose which resistors to plot
+# plot_resistance_and_deltaV(resistances_over_time, all_deltaV_free, all_deltaV_nudge, beta, resistors_to_plot)
+
 ##IMPROVED RESISTANCE READER
 def read_resistance_values(file_path):
     """Read resistance values from a netlist file, handling multi-line parameters with continuation,
@@ -154,7 +231,7 @@ def accumulate_resistance_values(current_resistances, resistances_over_time):
         else:
             resistances_over_time[key] = [value]
             
-def plot_resistance_changes(resistances_over_time):
+def plot_resistance_changes(resistances_over_time, beta, gamma):
     """
     Plot the resistance values across iterations as stored in the resistances_over_time dictionary.
 
@@ -171,10 +248,40 @@ def plot_resistance_changes(resistances_over_time):
         # Plot the resistance changes over iterations
         plt.plot(iterations, values, marker='o', linestyle='-', label=resistor)
 
-    plt.title('Resistance Changes Over Iterations')  # Title of the plot
+    plt.title(f'Resistance Changes Over Iterations for beta={beta} and gamma={gamma}')  # Title of the plot
     plt.xlabel('Iteration Number')  # X-axis label
     plt.ylabel('Resistance Value (Ohms)')  # Y-axis label
     plt.grid(True)  # Enable grid for better readability
+    plt.legend(title='Resistor')  # Add a legend with a title
+    plt.show()  # Display the plot
+
+
+
+
+def plot_resistance_changes_log(resistances_over_time, beta, gamma):
+    """
+    Plot the resistance values across iterations as stored in the resistances_over_time dictionary,
+    using a logarithmic scale for the y-axis.
+
+    Args:
+        resistances_over_time (dict): Dictionary where keys are resistor labels (e.g., 'res1', 'res2', etc.)
+                                      and values are lists of resistance values over iterations.
+        beta (float): Parameter value used to indicate experimental conditions or configuration.
+    """
+    plt.figure(figsize=(12, 8))  # Set the size of the plot
+
+    # Generate a plot for each resistor in the dictionary
+    for resistor, values in resistances_over_time.items():
+        # Create an x-axis range based on the number of iterations
+        iterations = range(1, len(values) + 1)
+        # Plot the resistance changes over iterations
+        plt.plot(iterations, values, marker='o', linestyle='-', label=resistor)
+
+    plt.title(f'Resistance Changes Over Iterations for beta={beta} and gamma={gamma}')  # Title of the plot
+    plt.xlabel('Iteration Number')  # X-axis label
+    plt.ylabel('Resistance Value (Ohms)')  # Y-axis label
+    plt.yscale('log')  # Set the y-axis to logarithmic scale
+    plt.grid(True, which='both', linestyle='--', linewidth=0.5)  # Enable grid for better readability, compatible with log scale
     plt.legend(title='Resistor')  # Add a legend with a title
     plt.show()  # Display the plot
 
@@ -209,8 +316,44 @@ def plot_results(data, num_iterations, Y):
     
     # Display the plot
     plt.show()
-    
-def plot_free_and_nudged(my_results_free, my_results_nudged, output_nodes):
+def plot_deltaV_changes(all_deltaV_free, all_deltaV_nudge):
+    """
+    Plot the changes in deltaV values for 'free' and 'nudge' scenarios, and the difference of their squares.
+
+    Args:
+        all_deltaV_free (list): List of deltaV values from the free scenario.
+        all_deltaV_nudge (list): List of deltaV values from the nudge scenario.
+    """
+    # Check if both lists are of the same length
+    if len(all_deltaV_free) != len(all_deltaV_nudge):
+        raise ValueError("Both lists must have the same number of elements.")
+
+    # Calculate the difference of the squares of the values
+    deltaV_diff_squares = [(x**2 - y**2) for x, y in zip(all_deltaV_free, all_deltaV_nudge)]
+
+    # Creating the plot
+    plt.figure(figsize=(10, 5))  # Set the size of the plot
+    plt.plot(all_deltaV_free, label='Delta V Free', marker='o', linestyle='-')
+    plt.plot(all_deltaV_nudge, label='Delta V Nudge', marker='x', linestyle='--')
+    plt.plot(deltaV_diff_squares, label='Difference of Squares', marker='s', linestyle=':')
+
+    # Adding title and labels
+    plt.title('Comparison of Delta V Changes and Their Squared Differences')
+    plt.xlabel('Iteration')
+    plt.ylabel('Delta V and Squared Differences')
+
+    # Adding a legend
+    plt.legend()
+
+    # Show grid
+    plt.grid(True)
+
+    # Display the plot
+    plt.show()
+
+
+   
+def plot_free_and_nudged(my_results_free, my_results_nudged, output_nodes, beta):
     # Validate input
     if my_results_free is None or my_results_nudged is None:
         raise ValueError("Input data cannot be None")
@@ -228,7 +371,7 @@ def plot_free_and_nudged(my_results_free, my_results_nudged, output_nodes):
         plt.plot(x, my_results_nudged[:, i], label=f'Nudged Results ({node})')
         plt.plot(x, my_results_free[:, i] - my_results_nudged[:, i], label=f"Difference ({node})")
     # Adding titles and labels
-    plt.title('Results over Iterations')
+    plt.title(f"Results over Iterations for beta={beta}")
     plt.xlabel('Iteration')
     plt.ylabel('Measured Value at output')
 
@@ -241,7 +384,47 @@ def plot_free_and_nudged(my_results_free, my_results_nudged, output_nodes):
     # Display the plot
     plt.show()
     
-def plot_results_and_Y(data, num_iterations, Y):
+    
+def plot_resistance_and_voltages(resistances_over_time, beta, selected_resistors, X):
+    """
+    Plot the resistance values and corresponding voltage data for the first set of iterations,
+    using separate y-axes for resistance and voltage due to differing scales.
+
+    Args:
+        resistances_over_time (dict): Dictionary where keys are resistor labels and values are lists of resistance values over iterations.
+        beta (float): A parameter that might affect the title or other aspects of the plot.
+        selected_resistors (list): List of resistor labels to plot.
+        X (np.array): 2D array where columns are voltages at different nodes (e.g., node1, node4, node7) for each measurement iteration.
+    """
+    fig, ax1 = plt.subplots(figsize=(12, 8))  # Set the size of the plot
+
+    # Plot resistance changes for selected resistors on the primary y-axis
+    for resistor in selected_resistors:
+        if resistor in resistances_over_time:
+            values = resistances_over_time[resistor]
+            iterations = range(1, len(values) + 1)
+            ax1.plot(iterations, values, marker='o', linestyle='-', label=f"Resistance - {resistor}")
+
+    ax1.set_xlabel('Iteration Number')  # X-axis label
+    ax1.set_ylabel('Resistance Value (Ohms)', color='tab:blue')  # Primary y-axis label
+    ax1.tick_params(axis='y', labelcolor='tab:blue')
+    ax1.set_yscale('log')
+    ax1.grid(True)
+
+    # Create a second y-axis for the voltage data
+    ax2 = ax1.twinx()  
+    ax2.set_ylabel('Voltage (Volts)', color='tab:red')  # Secondary y-axis label
+    ax2.plot(range(1, len(X) + 1), X[:, 0]-X[:, 2], label='Voltage difference', linestyle='--', color='tab:red')
+    ax2.tick_params(axis='y', labelcolor='tab:red')
+
+    plt.title(f'Resistance and Voltage Changes Over Iterations for beta={beta}')
+    lines, labels = ax1.get_legend_handles_labels()
+    lines2, labels2 = ax2.get_legend_handles_labels()
+    ax1.legend(lines + lines2, labels + labels2, loc='upper right', title='Legend')
+    plt.show()  # Display the plot
+
+    
+def plot_results_and_Y(data, num_iterations, Y, beta):
     # Ensure data and Y are NumPy arrays for consistent shape handling
     data = np.array(data)
     Y = np.array(Y[0:num_iterations])
@@ -270,7 +453,7 @@ def plot_results_and_Y(data, num_iterations, Y):
         plt.plot(iterations, Y[:, j], label=f'True Output {j+1}', marker='x', linestyle='--')
 
     # Adding titles and labels
-    plt.title('Results over Iterations')
+    plt.title(f"Results over Iterations for beta={beta}")
     plt.xlabel('Iteration')
     plt.ylabel('Measured Values')
     plt.legend()  # This adds a legend using the labels specified in the plot commands
@@ -281,19 +464,32 @@ def plot_results_and_Y(data, num_iterations, Y):
     # Display the plot
     plt.show()
 
-def plot_sse(sse_values, num_iterations):
 
+    
+def plot_sse(sse_values, num_iterations, beta, gamma):
+    """
+    Plot the Sum of Squared Errors (SSE) for each iteration and display the mean of the last 5 SSE values.
+
+    Args:
+        sse_values (list): List of SSE values for each iteration.
+        num_iterations (int): Total number of iterations.
+        beta (float): Parameter value used to indicate experimental conditions or configuration.
+    """
     plt.figure(figsize=(10, 5))
     plt.plot(range(1, num_iterations + 1), sse_values, marker='o', linestyle='-', color='blue')
-    plt.title('Sum of Squared Errors per Iteration')
+    plt.title(f"Sum of Squared Errors per Iteration for beta={beta} and gamma={gamma} ")
     plt.xlabel('Iteration')
     plt.ylabel('Sum of Squared Errors (SSE)')
     plt.grid(True)
     
-    
-    plt.show()
-    
-    
+    # Calculate the mean of the last 5 SSE values
+    if len(sse_values) >= 5:
+        last_5_mean = sum(sse_values[-5:]) / 5
+        # Display the mean of the last 5 SSE values on the plot
+        plt.axhline(y=last_5_mean, color='r', linestyle='--', label=f'Mean of last 5 SSE values: {last_5_mean:.2f}')
+        plt.legend()  # Show the legend to explain the line
+
+    plt.show()   
 
 def calculate_sse(losses, X_vec):
     return np.sum(np.square(losses))

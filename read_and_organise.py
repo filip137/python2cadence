@@ -48,13 +48,13 @@ def create_resistor_list(input_file_path, save_as_new=True):
 
 
 def read_and_store_results(psf_ascii_results, resistors_list):
-    psf = PSF(psf_ascii_results)  # Assuming PSF is a defined class for handling PSF ASCII files
+    psf = PSF(psf_ascii_results)  
     dtype = [('resistor', 'U10'), ('V1', 'f8'), ('V2', 'f8'), ('deltaV', 'f8')]
     voltages_matrix = np.empty((0, 4), dtype=dtype) #this would need to be modified for transistors
     for resistor in resistors_list:
         node_voltages = resistor['node voltages']
         name = resistor['resistance_key']
-        # Check if the first node voltage is "0" and set V1 accordingly
+        # Check if the first node voltage is 0 and set V1 accordingly
         if node_voltages[0] == "0":
             V1 = 0
         else:

@@ -65,10 +65,8 @@ def run_spectre_simulation(netlist_file_path, output_directory, i, mode):
         "+logstatus"
     ]
 
-    # Print a message indicating which iteration is running
     print(f"Running {mode} simulation for iteration {i + 1}...")
 
-    # Execute Spectre command
     try:
         # Redirect standard output and error to suppress them
         with open(os.devnull, 'w') as devnull:

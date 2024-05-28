@@ -1,0 +1,189 @@
+
+Spectre (R) Circuit Simulator
+Version 19.1.0.454.isr10 64bit -- 26 Aug 2020
+Copyright (C) 1989-2020 Cadence Design Systems, Inc. All rights reserved worldwide. Cadence and Spectre are registered trademarks of Cadence Design Systems, Inc. All others are the property of their respective holders.
+
+Includes RSA BSAFE(R) Cryptographic or Security Protocol Software from RSA Security, Inc.
+
+User: filip   Host: maxicao   HostID: 18ACD601   PID: 132755
+Memory  available: 5.0097 GB  physical: 99.7398 GB
+Linux   : CentOS Linux release 7.8.2003 (Core)
+CPU Type: Intel(R) Xeon(R) Gold 5220 CPU @ 2.20GHz
+        Socket: Processors [Frequency] (Hyperthreaded Processor)
+        0:       0 [1000.0] ( 36 ),  1 [1000.0] ( 37 ),  2 [1020.8] ( 38 )
+                 3 [1000.0] ( 39 ),  4 [1000.0] ( 40 ),  5 [1000.0] ( 41 )
+                 6 [1000.1] ( 42 ),  7 [1000.0] ( 43 ),  8 [1000.0] ( 44 )
+                 9 [1000.0] ( 45 ), 10 [1000.0] ( 46 ), 11 [1000.0] ( 47 )
+                12 [1000.0] ( 48 ), 13 [1000.0] ( 49 ), 14 [1000.1] ( 50 )
+                15 [1000.0] ( 51 ), 16 [1000.0] ( 52 ), 17 [1000.1] ( 53 )
+        1:      18 [1000.0] ( 54 ), 19 [1000.0] ( 55 ), 20 [1000.1] ( 56 )
+                21 [1547.8] ( 57 ), 22 [3579.3] ( 58 ), 23 [1000.0] ( 59 )
+                24 [1000.2] ( 60 ), 25 [1000.0] ( 61 ), 26 [1000.0] ( 62 )
+                27 [1000.0] ( 63 ), 28 [1000.1] ( 64 ), 29 [1000.0] ( 65 )
+                30 [1000.1] ( 66 ), 31 [1000.0] ( 67 ), 32 [1000.0] ( 68 )
+                33 [1000.0] ( 69 ), 34 [1000.1] ( 70 ), 35 [2122.0] ( 71 )
+        
+System load averages (1min, 5min, 15min) : 1.2 %, 0.6 %, 0.4 %
+Hyperthreading is enabled
+
+
+Simulating `/home/filip/CMOS130/simulations/sample_files/upenn_classification.scs' on maxicao at 11:00:17 AM, Tue May 28, 2024 (process id: 132755).
+Current working directory: /home/filip/CMOS130/simulations/python_files_dont_delete
+Command line:
+    /cao/Softs/cadence/SPECTRE191/tools.lnx86/bin/spectre -64  \
+        /home/filip/CMOS130/simulations/sample_files/upenn_classification.scs  \
+        +escchars -format psfascii -raw  \
+        /home/filip/CMOS130/simulations/various_tests/upenn +lqtimeout  \
+        900 -maxw 5 -maxn 5 +logstatus
+
+Loading /cao/Softs/cadence/SPECTRE191/tools.lnx86/cmi/lib/64bit/5.0/libinfineon_sh.so ...
+Loading /cao/Softs/cadence/SPECTRE191/tools.lnx86/cmi/lib/64bit/5.0/libphilips_o_sh.so ...
+Loading /cao/Softs/cadence/SPECTRE191/tools.lnx86/cmi/lib/64bit/5.0/libphilips_sh.so ...
+Loading /cao/Softs/cadence/SPECTRE191/tools.lnx86/cmi/lib/64bit/5.0/libsparam_sh.so ...
+Loading /cao/Softs/cadence/SPECTRE191/tools.lnx86/cmi/lib/64bit/5.0/libstmodels_sh.so ...
+Reading file:  /home/filip/CMOS130/simulations/sample_files/upenn_classification.scs
+Reading file:  /cao/Softs/cadence/SPECTRE191/tools.lnx86/spectre/etc/configs/spectre.cfg
+Reading file:  /home/filip/CMOS130/corners.scs
+Reading file:  /cao/DK/ST/HCMOS9A_10.9/PDK_STM_hcmos9lp_HV_M4_5V0/10.9-10/DATA/MODELS/SPECTRE/CORNERS/common_cmim.scs
+Reading file:  /cao/DK/ST/HCMOS9A_10.9/PDK_STM_hcmos9lp_HV_M4_5V0/10.9-10/DATA/MODELS/SPECTRE/CORNERS/common_metal.scs
+Reading file:  /cao/DK/ST/HCMOS9A_10.9/PDK_STM_hcmos9lp_HV_M4_5V0/10.9-10/DATA/MODELS/SPECTRE/CORNERS/common_poly.scs
+Reading file:  /cao/DK/ST/HCMOS9A_10.9/PDK_STM_hcmos9lp_HV_M4_5V0/10.9-10/DATA/MODELS/SPECTRE/CORNERS/common_active.scs
+Reading file:  /cao/DK/ST/HCMOS9A_10.9/PDK_STM_hcmos9lp_HV_M4_5V0/10.9-10/DATA/MODELS/SPECTRE/CORNERS/common_go1.scs
+Reading file:  /cao/DK/ST/HCMOS9A_10.9/PDK_STM_hcmos9lp_HV_M4_5V0/10.9-10/DATA/MODELS/SPECTRE/CORNERS/common_bipolar.scs
+Reading file:  /cao/DK/ST/HCMOS9A_10.9/PDK_STM_hcmos9lp_HV_M4_5V0/10.9-10/DATA/MODELS/SPECTRE/CORNERS/common_go2.scs
+Reading file:  /cao/DK/ST/HCMOS9A_10.9/PDK_STM_hcmos9lp_HV_M4_5V0/10.9-10/DATA/MODELS/SPECTRE/CORNERS/common_mosgo2.scs
+Reading file:  /cao/DK/ST/HCMOS9A_10.9/PDK_STM_hcmos9lp_HV_M4_5V0/10.9-10/DATA/MODELS/SPECTRE/CORNERS/common_mosgo2n.scs
+Reading file:  /cao/DK/ST/HCMOS9A_10.9/PDK_STM_hcmos9lp_HV_M4_5V0/10.9-10/DATA/MODELS/SPECTRE/CORNERS/common_mosgo2p.scs
+Reading file:  /cao/DK/ST/HCMOS9A_10.9/PDK_STM_hcmos9lp_HV_M4_5V0/10.9-10/DATA/MODELS/SPECTRE/CORNERS/common_dmos.scs
+Reading file:  /cao/DK/ST/HCMOS9A_10.9/PDK_STM_hcmos9lp_HV_M4_5V0/10.9-10/DATA/MODELS/SPECTRE/CORNERS/cmimhk.scs
+Reading file:  /cao/DK/ST/HCMOS9A_10.9/PDK_STM_hcmos9lp_HV_M4_5V0/10.9-10/DATA/MODELS/SPECTRE/CORNERS/soa.scs
+Reading file:  /cao/DK/ST/HCMOS9A_10.9/PDK_STM_hcmos9lp_HV_M4_5V0/10.9-10/DATA/MODELS/SPECTRE/CORNERS/cmim.scs
+Reading file:  /cao/DK/ST/HCMOS9A_10.9/PDK_STM_hcmos9lp_HV_M4_5V0/10.9-10/DATA/MODELS/SPECTRE/CORNERS/cmom.scs
+Reading file:  /cao/DK/ST/HCMOS9A_10.9/PDK_STM_hcmos9lp_HV_M4_5V0/10.9-10/DATA/MODELS/SPECTRE/CORNERS/cmom_hd.scs
+Reading file:  /cao/DK/ST/HCMOS9A_10.9/PDK_STM_hcmos9lp_HV_M4_5V0/10.9-10/DATA/MODELS/SPECTRE/CORNERS/cnat.scs
+Reading file:  /cao/DK/ST/HCMOS9A_10.9/PDK_STM_hcmos9lp_HV_M4_5V0/10.9-10/DATA/MODELS/SPECTRE/CORNERS/cmetal.scs
+Reading file:  /cao/DK/ST/HCMOS9A_10.9/PDK_STM_hcmos9lp_HV_M4_5V0/10.9-10/DATA/MODELS/SPECTRE/CORNERS/resesr.scs
+Reading file:  /cao/DK/ST/HCMOS9A_10.9/PDK_STM_hcmos9lp_HV_M4_5V0/10.9-10/DATA/MODELS/SPECTRE/CORNERS/otp.scs
+Reading file:  /cao/DK/ST/HCMOS9A_10.9/PDK_STM_hcmos9lp_HV_M4_5V0/10.9-10/DATA/MODELS/SPECTRE/CORNERS/mosull.scs
+Reading file:  /cao/DK/ST/HCMOS9A_10.9/PDK_STM_hcmos9lp_HV_M4_5V0/10.9-10/DATA/MODELS/SPECTRE/CORNERS/diode.scs
+Reading file:  /cao/DK/ST/HCMOS9A_10.9/PDK_STM_hcmos9lp_HV_M4_5V0/10.9-10/DATA/MODELS/SPECTRE/CORNERS/rpolyp.scs
+Reading file:  /cao/DK/ST/HCMOS9A_10.9/PDK_STM_hcmos9lp_HV_M4_5V0/10.9-10/DATA/MODELS/SPECTRE/CORNERS/pnpvs11.scs
+Reading file:  /cao/DK/ST/HCMOS9A_10.9/PDK_STM_hcmos9lp_HV_M4_5V0/10.9-10/DATA/MODELS/SPECTRE/CORNERS/npnvi11.scs
+Reading file:  /cao/DK/ST/HCMOS9A_10.9/PDK_STM_hcmos9lp_HV_M4_5V0/10.9-10/DATA/MODELS/SPECTRE/CORNERS/mos5v0.scs
+Reading file:  /cao/DK/ST/HCMOS9A_10.9/PDK_STM_hcmos9lp_HV_M4_5V0/10.9-10/DATA/MODELS/SPECTRE/CORNERS/mos5v0dep.scs
+Reading file:  /cao/DK/ST/HCMOS9A_10.9/PDK_STM_hcmos9lp_HV_M4_5V0/10.9-10/DATA/MODELS/SPECTRE/CORNERS/mos5v0donut.scs
+Reading file:  /cao/DK/ST/HCMOS9A_10.9/PDK_STM_hcmos9lp_HV_M4_5V0/10.9-10/DATA/MODELS/SPECTRE/CORNERS/mos5v0uln.scs
+Reading file:  /cao/DK/ST/HCMOS9A_10.9/PDK_STM_hcmos9lp_HV_M4_5V0/10.9-10/DATA/MODELS/SPECTRE/CORNERS/mos1v8.scs
+Reading file:  /cao/DK/ST/HCMOS9A_10.9/PDK_STM_hcmos9lp_HV_M4_5V0/10.9-10/DATA/MODELS/SPECTRE/CORNERS/mosde5v0.scs
+Reading file:  /cao/DK/ST/HCMOS9A_10.9/PDK_STM_hcmos9lp_HV_M4_5V0/10.9-10/DATA/MODELS/SPECTRE/CORNERS/rpolyh.scs
+Reading file:  /cao/DK/ST/HCMOS9A_10.9/PDK_STM_hcmos9lp_HV_M4_5V0/10.9-10/DATA/MODELS/SPECTRE/CORNERS/rpolyhplddonly.scs
+Reading file:  /cao/DK/ST/HCMOS9A_10.9/PDK_STM_hcmos9lp_HV_M4_5V0/10.9-10/DATA/MODELS/SPECTRE/CORNERS/rndiff.scs
+Reading file:  /cao/DK/ST/HCMOS9A_10.9/PDK_STM_hcmos9lp_HV_M4_5V0/10.9-10/DATA/MODELS/SPECTRE/CORNERS/rspldd.scs
+Reading file:  /cao/DK/ST/HCMOS9A_10.9/PDK_STM_hcmos9lp_HV_M4_5V0/10.9-10/DATA/MODELS/SPECTRE/CORNERS/cdonwpo5v0.scs
+Reading file:  /cao/DK/ST/HCMOS9A_10.9/PDK_STM_hcmos9lp_HV_M4_5V0/10.9-10/DATA/MODELS/SPECTRE/CORNERS/rnwell.scs
+Reading file:  /cao/DK/ST/HCMOS9A_10.9/PDK_STM_hcmos9lp_HV_M4_5V0/10.9-10/DATA/MODELS/SPECTRE/CORNERS/mosdr5v0i.scs
+Reading file:  /cao/DK/ST/HCMOS9A_10.9/PDK_STM_hcmos9lp_HV_M4_5V0/10.9-10/DATA/MODELS/SPECTRE/CORNERS/mosdr5v0.scs
+Reading file:  /cao/DK/ST/HCMOS9A_10.9/PDK_STM_hcmos9lp_HV_M4_5V0/10.9-10/DATA/MODELS/SPECTRE/CORNERS/mosdr5v0l.scs
+Reading file:  /cao/DK/ST/HCMOS9A_10.9/PDK_STM_hcmos9lp_HV_M4_5V0/10.9-10/DATA/MODELS/SPECTRE/CORNERS/Schottky.scs
+Reading file:  /cao/DK/ST/HCMOS9A_10.9/PDK_STM_hcmos9lp_HV_M4_5V0/10.9-10/DATA/MODELS/SPECTRE/CORNERS/veriloga.scs
+Reading file:  /cao/DK/ST/HCMOS9A_10.9/PDK_STM_hcmos9lp_HV_M4_5V0/10.9-10/DATA/MODELS/SPECTRE/CORNERS/gidl_gisl.va
+Reading link:  /cao/Softs/cadence/SPECTRE191/tools.lnx86/spectre/etc/ahdl/constants.h
+Reading file:  /cao/Softs/cadence/SPECTRE191/tools.lnx86/spectre/etc/ahdl/constants.vams
+Reading link:  /cao/Softs/cadence/SPECTRE191/tools.lnx86/spectre/etc/ahdl/discipline.h
+Reading file:  /cao/Softs/cadence/SPECTRE191/tools.lnx86/spectre/etc/ahdl/disciplines.vams
+Reading file:  /cao/DK/ST/HCMOS9A_10.9/PDK_STM_hcmos9lp_HV_M4_5V0/10.9-10/DATA/MODELS/SPECTRE/CORNERS/bsim3_addnoise.va
+Reading file:  /cao/DK/ST/HCMOS9A_10.9/PDK_STM_hcmos9lp_HV_M4_5V0/10.9-10/DATA/MODELS/SPECTRE/CORNERS/gidl.va
+Time for NDB Parsing: CPU = 208.299 ms, elapsed = 633.776 ms.
+Time accumulated: CPU = 293.252 ms, elapsed = 633.78 ms.
+Peak resident memory used = 59.9 Mbytes.
+
+Time for Elaboration: CPU = 18.976 ms, elapsed = 19.022 ms.
+Time accumulated: CPU = 312.326 ms, elapsed = 652.9 ms.
+Peak resident memory used = 68.2 Mbytes.
+
+
+Time for EDB Visiting: CPU = 580 us, elapsed = 582.933 us.
+Time accumulated: CPU = 313.01 ms, elapsed = 653.586 ms.
+Peak resident memory used = 68.9 Mbytes.
+
+
+Global user options:
+               save = allpub
+
+Scoped user options:
+
+Circuit inventory:
+              nodes 9
+            isource 3     
+           resistor 16    
+            vsource 5     
+
+Analysis and control statement inventory:
+                 dc 1     
+               info 7     
+
+Output statements:
+             .probe 0     
+           .measure 0     
+               save 0     
+
+Time for parsing: CPU = 1.876 ms, elapsed = 7.24483 ms.
+Time accumulated: CPU = 314.978 ms, elapsed = 660.922 ms.
+Peak resident memory used = 70.2 Mbytes.
+
+~~~~~~~~~~~~~~~~~~~~~~
+Pre-Simulation Summary
+~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
+
+******************
+DC Analysis `dcOp'
+******************
+
+Opening the PSFASCII file /home/filip/CMOS130/simulations/various_tests/upenn/dcOp.dc ...
+Important parameter values:
+    reltol = 1e-03
+    abstol(V) = 1 uV
+    abstol(I) = 1 pA
+    temp = 27 C
+    tnom = 27 C
+    tempeffects = all
+    gmindc = 1 pS
+
+Maximum value achieved for any signal of each quantity: 
+V: V(node2) = 4 V
+I: I(V3:p) = 131.5 uA
+Convergence achieved in 2 iterations.
+DC simulation time: CPU = 2.265 ms, elapsed = 3.40104 ms.
+Total time required for dc analysis `dcOp': CPU = 2.358 ms, elapsed = 3.49283 ms.
+Time accumulated: CPU = 329.257 ms, elapsed = 677.878 ms.
+Peak resident memory used = 71.5 Mbytes.
+
+dcOpInfo: writing operating point information to rawfile.
+
+Opening the PSFASCII file /home/filip/CMOS130/simulations/various_tests/upenn/dcOpInfo.info ...
+modelParameter: writing model parameter values to rawfile.
+
+Opening the PSFASCII file /home/filip/CMOS130/simulations/various_tests/upenn/modelParameter.info ...
+element: writing instance parameter values to rawfile.
+
+Opening the PSFASCII file /home/filip/CMOS130/simulations/various_tests/upenn/element.info ...
+outputParameter: writing output parameter values to rawfile.
+
+Opening the PSFASCII file /home/filip/CMOS130/simulations/various_tests/upenn/outputParameter.info ...
+designParamVals: writing netlist parameters to rawfile.
+
+Opening the PSFASCII file /home/filip/CMOS130/simulations/various_tests/upenn/designParamVals.info ...
+primitives: writing primitives to rawfile.
+
+Opening the PSFASCII file /home/filip/CMOS130/simulations/various_tests/upenn/primitives.info.primitives ...
+subckts: writing subcircuits to rawfile.
+
+Opening the PSFASCII file /home/filip/CMOS130/simulations/various_tests/upenn/subckts.info.subckts ...
+
+Aggregate audit (11:00:18 AM, Tue May 28, 2024):
+Time used: CPU = 373 ms, elapsed = 734 ms, util. = 50.8%.
+Time spent in licensing: elapsed = 340 ms, percentage of total = 46.3%.
+Peak memory used = 73.5 Mbytes.
+Simulation started at: 11:00:17 AM, Tue May 28, 2024, ended at: 11:00:18 AM, Tue May 28, 2024, with elapsed time (wall clock): 734 ms.
+spectre completes with 0 errors, 0 warnings, and 1 notice.

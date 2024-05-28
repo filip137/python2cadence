@@ -102,7 +102,14 @@ def modify_input_config(sample_file_path, new_sample_file_path, init_weights):
     
     return new_sample_file_path
 
-def modify_netlist_general(original_file_path, new_file_path, X_vec, Y_vec, cond_update, modes, beta, losses, outputs, node_to_inudge, gamma):
+def modify_netlist_general(original_file_path, new_file_path, X_vec, Y_vec, cond_update, modes, beta, losses, outputs, node_to_inudge, gamma, input_nodes):
+    
+    # The problem so far is that this function might mbe slowed down by the fact that it takes the old file_path and modifies it 
+    # However, creating a template and then rewriting the everything seems difficult because SPECTRE apparently has some rules regarding the spacing, max characters in the line, etc that
+    # I am not able to change. 
+    
+    
+    
     # Ensure modes is a list to simplify processing
     if not isinstance(modes, list):
         modes = [modes]
@@ -139,8 +146,8 @@ def modify_netlist_general(original_file_path, new_file_path, X_vec, Y_vec, cond
                 #     iterable = False
                 #     X_vec = [X_vec]  # Convert scalar to list for uniform processing
                 if 'Vdc' in modes:
-                    for i, vdc_value in enumerate(X_vec, start=1):
-                        parts = [f'Vdc{i}={vdc_value}' if part.startswith(f'Vdc{i}=') else part for part in parts]
+                    for vdc_label, vdc_value in zip(input_nodes, X_vec):
+                        parts = [f'{vdc_label}={vdc_value}' if part.startswith(f'{vdc_label}=') else part for part in parts]
 
                 # Update Inudge value if requested
                 if 'Inudge' in modes:
@@ -163,14 +170,16 @@ def modify_netlist_general(original_file_path, new_file_path, X_vec, Y_vec, cond
                                 #     new_value = original_value
                                 #update =  gamma * (original_value * delta)/(1/original_value + delta)
                                 #new_value = original_value + update
-                                # if r_update < -100:
-                                #      new_value = original_value - 100
+                                if r_update < 0:
+                                    new_value = original_value - 1000
+                                if r_update > 0:
+                                    new_value = original_value + 1000
                                 if new_value < 5:
-                                    new_value = original_value
+                                    new_value = 10e9
                                 # if new_value < 5:
                                 #     new_value = 5
-                                # if new_value > 10000:
-                                #     new_value = original_value
+                                if new_value > 11e9:
+                                    new_value = 10e9
                                     
                                 print(f"the resistance change of {part} is {new_value - original_value}")
                                 parts[i] = f'{res_name}={new_value}'
@@ -194,48 +203,6 @@ def modify_netlist_general(original_file_path, new_file_path, X_vec, Y_vec, cond
 
     print(f'Modified netlist saved to {new_file_path}')
 
-# def process_parameters_block(current_parameters, X_vec, Y_vec, cond_update, modes, beta, losses, outputs, node_to_inudge):
-#     # Join all parts of a parameter block and split into individual parts
-#     full_line = ' '.join(current_parameters).replace('\\', '')  # Remove line continuation for processing
-#     parts = full_line.split()
-
-#     # Modify parts as needed
-#     for i, part in enumerate(parts):
-#         if any(part.startswith(f'{mode}') for mode in modes):
-#             if 'Vdc' in modes:
-#                 for j, vdc_value in enumerate(X_vec, start=1):
-#                     if part.startswith(f'Vdc{j}='):
-#                         parts[i] = f'Vdc{j}={vdc_value}'
-#             if 'Inudge' in modes:
-#                 parts = update_inudge_values(parts, node_to_inudge, outputs, losses, beta)
-#             if 'deltaR' in modes:
-#                 for update in cond_update:
-#                     res_name = update['resistor']
-#                     delta = update['cond_update']
-#                     if part.startswith(res_name + '='):
-#                         original_value = float(part.split('=')[1])
-#                         new_value = np.round(original_value + delta,2)
-#                         parts[i] = f'{res_name}={new_value}'
-
-#     # Reconstruct the parameter line with line continuations if necessary
-#     reconstructed_lines = reconstruct_with_continuations(parts)
-#     return reconstructed_lines
-
-# def reconstruct_with_continuations(parts):
-#     # Logic to reconstruct lines with appropriate line continuations
-#     max_line_length = 80
-#     current_line = ''
-#     reconstructed_lines = []
-#     for part in parts:
-#         if len(current_line) + len(part) + 1 > max_line_length:
-#             reconstructed_lines.append(current_line + ' \\')
-#             current_line = part
-#         else:
-#             current_line += ' ' + part if current_line else part
-#     reconstructed_lines.append(current_line)
-#     return [line + '\n' for line in reconstructed_lines]
-
-# Ensure `update_inudge_values` is defined and handles the required logic as well.
 
 
 def create_node_to_inudge_map(file_path):
@@ -260,20 +227,31 @@ def update_inudge_values(parts, node_to_inudge, outputs, losses, beta):
             parts = [f'{inudge_key}={i_nudge}' if part.startswith(f'{inudge_key}=') else part for part in parts]
     return parts
 
-def calc_deltaR(voltage_matrix_f, voltage_matrix_n, gamma):
-        # Assuming 'resistor' for names and 'deltaV' for voltage differences
+def calc_deltaV(voltage_matrix_f, voltage_matrix_n, gamma):
+    
+    
     resistor_names = voltage_matrix_f['resistor']
-    deltaV_f = voltage_matrix_f['deltaV']  # Correctly access data by field name
-    deltaV_n = voltage_matrix_n['deltaV']  # Correctly access data by field name
-    cond_update_values= (deltaV_f ** 2 - deltaV_n ** 2)
-    cond_update_values=np.round(cond_update_values,6)
-        # Define the dtype for the new structured array
+    deltaV_f = voltage_matrix_f['voltage1'] - voltage_matrix_f['voltage2']
+    deltaV_n = voltage_matrix_n['voltage1'] - voltage_matrix_n['voltage2']
+    cond_update_values = (deltaV_f ** 2 - deltaV_n ** 2)
+    cond_update_values = np.round(cond_update_values, 6)
+
     dtype = [('resistor', 'U10'), ('cond_update', 'f8')]
     cond_update = np.empty(len(resistor_names), dtype=dtype)
-        # Fill the new structured array
     cond_update['resistor'] = resistor_names
-    cond_update['cond_update'] = cond_update_values
+    # Initialize all cond_update values to maintain the existing values first
+    cond_update['cond_update'] = np.nan  # Use NaN or another placeholder to signify "unchanged" initially
 
+    # Iterate through each element and update only if the resistor name starts with 'res'
+    for i in range(len(resistor_names)):
+        if resistor_names[i].startswith('res'):
+            # Perform specific operation, here just updating with calculated delta values
+            cond_update['cond_update'][i] = cond_update_values[i]
+        # Names not starting with 'res' will remain as initially set (NaN or unchanged)
+        if resistor_names[i].startswith('fet'):
+            cond_update['cond_update'][i] = cond_update_values[i] ##still need to change
+            
+            
     return cond_update
     
 

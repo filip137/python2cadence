@@ -15,10 +15,6 @@ import datetime
 from sklearn.datasets import load_iris
 import pandas as pd
 
-def iris_dataset_generator(epoch_size):
-    iris=load_iris()
-    iris_df = pd.DataFrame(data=iris.data, columns=iris.feature_names)
-    
     
 def move_simulation_files(source_directory, target_directory, extensions):
     # Check if the target directory exists and remove it if it does
@@ -230,7 +226,64 @@ def accumulate_resistance_values(current_resistances, resistances_over_time):
             resistances_over_time[key].append(value)
         else:
             resistances_over_time[key] = [value]
+ 
             
+def plot_conductance_changes(resistances_over_time, beta, gamma):
+    """
+    Plot the conductance values across iterations as converted from the resistances_over_time dictionary.
+
+    Args:
+        resistances_over_time (dict): Dictionary where keys are resistor labels (e.g., 'res1', 'res2', etc.)
+                                      and values are lists of resistance values over iterations.
+        beta (float): Parameter value used to indicate experimental conditions or configuration.
+        gamma (float): Parameter value used to indicate experimental conditions or configuration.
+    """
+    conductances_over_time = {}
+    for resistor, resistances in resistances_over_time.items():
+        conductances_over_time[resistor] = [1 / r if r != 0 else np.inf for r in resistances]
+
+    plt.figure(figsize=(12, 8))  # Set the size of the plot
+
+    # Generate a plot for each resistor in the dictionary
+    for resistor, values in conductances_over_time.items():
+        # Create an x-axis range based on the number of iterations
+        iterations = range(1, len(values) + 1)
+        # Plot the conductance changes over iterations
+        plt.plot(iterations, values, marker='o', linestyle='-', label=resistor)
+
+    plt.title(f'Conductance Changes Over Iterations for beta={beta} and gamma={gamma}')  # Title of the plot
+    plt.xlabel('Iteration Number')  # X-axis label
+    plt.ylabel('Conductance Value (Siemens)')  # Y-axis label
+    plt.grid(True)  # Enable grid for better readability
+    plt.legend(title='Resistor')  # Add a legend with a title
+    plt.show()  # Display the plot
+
+def plot_conductance_changes_log(resistances_over_time, beta, gamma):
+    """
+    Plot the conductance values across iterations as converted from the resistances_over_time dictionary,
+    using a logarithmic scale for the y-axis.
+
+    Args:
+        resistances_over_time (dict): Dictionary where keys are resistor labels (e.g., 'res1', 'res2', etc.)
+                                      and values are lists of resistance values over iterations.
+        beta (float): Parameter value used to indicate experimental conditions or configuration.
+        gamma (float): Parameter value used to indicate experimental conditions or configuration.
+    """
+    conductances_over_time = {}
+    for resistor, resistances in resistances_over_time.items():
+        conductances_over_time[resistor] = [1 / r if r != 0 else np.inf for r in resistances]
+
+    plt.figure(figsize=(12, 8))  # Set the size of the plot
+
+    # Generate a plot for each resistor in the dictionary
+    for resistor, values in conductances_over_time.items():
+        # Create an x-axis range based on the number of iterations
+        iterations = range(1, len(values) + 1)
+        # Plot the conductance changes over iterations
+        plt.plot(iterations, values, marker='o', linestyle='-', label=resistor)
+    
+ 
+    
 def plot_resistance_changes(resistances_over_time, beta, gamma):
     """
     Plot the resistance values across iterations as stored in the resistances_over_time dictionary.
@@ -351,38 +404,63 @@ def plot_deltaV_changes(all_deltaV_free, all_deltaV_nudge):
     # Display the plot
     plt.show()
 
+def plot_results(target_results, my_results, output_nodes):
+    num_outputs = len(output_nodes)
+    
+    # Ensure target_results and my_results are numpy arrays
+    target_results = np.array(target_results)
+    my_results = np.array(my_results)
+
+    for i in range(num_outputs):
+        plt.figure(figsize=(10, 6))
+        
+        # Plot target results
+        plt.plot(target_results[:, i], 'o-', label=f'Target {output_nodes[i]}')
+        
+        # Plot current results
+        plt.plot(my_results[:, i], 's-', label=f'Current {output_nodes[i]}')
+        
+        plt.title(f'Results for {output_nodes[i]}')
+        plt.xlabel('Iteration')
+        plt.ylabel('Voltage (V)')
+        plt.legend()
+        
+        plt.tight_layout()
+        plt.show()
+
 
    
-def plot_free_and_nudged(my_results_free, my_results_nudged, output_nodes, beta):
+def plot_free_and_nudged(my_results_free, my_results_nudged, output_nodes, beta, gamma):
     # Validate input
     if my_results_free is None or my_results_nudged is None:
         raise ValueError("Input data cannot be None")
     if len(my_results_free) != len(my_results_nudged):
         raise ValueError("Input data must have the same length")
 
-    # Setup plot
-    plt.figure(figsize=(10, 5))
-    n_of_iter = len(my_results_free)  # More robust against non-numpy input
+    # Number of iterations
+    n_of_iter = len(my_results_free)
     x = np.linspace(1, n_of_iter, n_of_iter)
 
-    # Plotting data
+    # Plotting data for each output node in a separate figure
     for i, node in enumerate(output_nodes):
+        plt.figure(figsize=(10, 5))
         plt.plot(x, my_results_free[:, i], label=f'Free Results ({node})')
         plt.plot(x, my_results_nudged[:, i], label=f'Nudged Results ({node})')
         plt.plot(x, my_results_free[:, i] - my_results_nudged[:, i], label=f"Difference ({node})")
-    # Adding titles and labels
-    plt.title(f"Results over Iterations for beta={beta}")
-    plt.xlabel('Iteration')
-    plt.ylabel('Measured Value at output')
+        
+        # Adding titles and labels
+        plt.title(f"Results over Iterations for {node} (beta={beta}, gamma={gamma})")
+        plt.xlabel('Iteration')
+        plt.ylabel('Measured Value at output')
 
-    # Legend
-    plt.legend(loc='best')  # Improved legend placement
+        # Legend
+        plt.legend(loc='best')  # Improved legend placement
 
-    # Grid
-    plt.grid(True)
+        # Grid
+        plt.grid(True)
 
-    # Display the plot
-    plt.show()
+        # Display the plot
+        plt.show()
     
     
 def plot_resistance_and_voltages(resistances_over_time, beta, selected_resistors, X):

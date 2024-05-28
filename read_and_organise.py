@@ -1,6 +1,6 @@
 from psf_utils import PSF, Quantity
 import numpy as np
-
+import logging
 
 
 def create_resistor_list(input_file_path, save_as_new=True):
@@ -37,6 +37,8 @@ def create_resistor_list(input_file_path, save_as_new=True):
             resistor_dict = {
                 "name": name,  # This is the label in the netlist, like R4, R3...
                 "node voltages": (node_voltage1, node_voltage2),
+                "node_voltage_ter1": None,
+                "node_voltage_ter2": None,
                 "current": "Unknown",  # Maybe useful for later
                 "resistance": resistance_value,  # Actual resistance value assigned
                 "resistance_key": resistance_key  # Keeping the resistance_key for reference
@@ -45,6 +47,89 @@ def create_resistor_list(input_file_path, save_as_new=True):
 
     return resistors_list
 
+def create_memresistor_array(resistors_list):
+    
+    
+    dtype = [('resistor', 'U10'), ('voltage1', 'float32'), ('voltage2', 'float32')]
+    structured_data = []
+    
+    for resistor in resistors_list:
+        # Extract name and voltages, assume some default values if necessary
+        name = resistor['resistance_key']
+        voltage1 = resistor.get('node_voltage_ter1', 0.0)  # Default voltage 0.0 if not available
+        voltage2 = resistor.get('node_voltage_ter2', 0.0)  # Default voltage 0.0 if not available
+        
+        # Append a tuple for each resistor to the list
+        structured_data.append((name, voltage1, voltage2))
+    
+    # Create a structured array from the list of tuples
+    resistor_array = np.array(structured_data, dtype=dtype)
+    return resistor_array
+
+
+def update_resistor_list(resistors_list, node_voltage_dict):
+    # Iterate over each resistor in the list
+    for resistor in resistors_list:
+        # Extract the node voltages from each resistor
+        node1, node2 = resistor['node voltages']
+
+        # Fetch the voltage values from the node_voltage_dict
+        # and update the resistor's node_voltage_values if the node exists in node_voltage_dict
+        voltage1 = node_voltage_dict.get(node1, "Unknown")  # Defaults to "Unknown" if node is not found
+        voltage2 = node_voltage_dict.get(node2, "Unknown")  # Defaults to "Unknown" if node is not found
+
+        # Update the node_voltage_values in the resistor dictionary
+        resistor['node_voltage_ter1'] = voltage1
+        resistor['node_voltage_ter2'] = voltage2
+
+    # Optionally return the updated list if needed for further operations
+    return resistors_list
+
+
+
+def create_node_voltage_dict(resistors_list):
+    node_voltage_dict = {}
+
+    # Extract unique node voltages and initialize their values
+    for resistor in resistors_list:
+        for node_voltage in resistor['node voltages']:
+            # Initialize each unique node voltage with a placeholder for its future voltage value
+            if node_voltage not in node_voltage_dict:
+                node_voltage_dict[node_voltage] = None  
+
+    return node_voltage_dict
+
+
+def read_node_voltages(psf_ascii_results, node_voltage_dict):
+    
+    # Reads all the node voltages that are in the node_voltage_dict
+    
+    psf = PSF(psf_ascii_results)
+    errors = {}
+
+    for node in node_voltage_dict:
+        try:
+            output = psf.get_signal(node).ordinate.real
+            node_voltage_dict[node] = output
+        except Exception as e:
+            print(f"Error retrieving data for node '{node}': {e}")
+
+            # Handle the error by setting the node's output to NaN
+            # Determine a sensible default size if possible or a single NaN
+            if isinstance(node_voltage_dict[node], np.ndarray):
+                default_size = len(node_voltage_dict[node])
+            else:
+                default_size = 1  # Adjust based on expected data size
+            node_voltage_dict[node] = np.full(default_size, np.nan)
+
+            # Record the error for possible further analysis
+            errors[node] = str(e)
+
+    # Print errors if any occurred
+    if errors:
+        print(f"Encountered errors with nodes: {errors}")
+
+    return node_voltage_dict
 
 
 def read_and_store_results(psf_ascii_results, resistors_list):
@@ -71,6 +156,11 @@ def read_and_store_results(psf_ascii_results, resistors_list):
         voltages_matrix = np.append(voltages_matrix, new_row)
 
     return voltages_matrix
+
+
+
+
+
 
 def read_all_results(psf_ascii_results, nodes):
     psf = PSF(psf_ascii_results)

@@ -243,12 +243,14 @@ def plot_resistance_changes_log(resistances_over_time, beta, gamma):
     plt.show()  # Display the plot
 
 
-def plot_sse_values(sse_values):
+def plot_sse_values(sse_values, gamma, beta):
     """
-    Plot the SSE values over iterations.
+    Plot the SSE values over iterations with gamma and beta values in the title.
 
     Parameters:
     sse_values (list): A list of SSE values.
+    gamma (float): The gamma value.
+    beta (float): The beta value.
 
     Returns:
     None
@@ -259,7 +261,7 @@ def plot_sse_values(sse_values):
     plt.plot(iterations, sse_values, marker='o', linestyle='-', color='b', label='Root of Squared Losses')
     plt.xlabel('Iteration')
     plt.ylabel('Root of Squared Losses')
-    plt.title('Root of Squared Losses Over Iterations')
+    plt.title(f'Root of Squared Losses Over Iterations (Gamma: {gamma}, Beta: {beta})')
     plt.legend()
     plt.grid(True)
     plt.show()

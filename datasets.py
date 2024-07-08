@@ -70,6 +70,16 @@ def generate_dataset_2input_1output(num_samples):
     return X, Y
 
 
+def generate_dataset_2input_1output_random(num_samples):
+    V1 = np.random.uniform(0,5, num_samples)
+    V2 = np.ones(num_samples)*0
+    X = np.column_stack((V1, V2))
+    #Y = V1.reshape(-1,1)
+    Y = V1.reshape(-1,1)
+    return X, Y
+
+
+
 def generate_dataset2(num_samples):
     # Generate inputs
 

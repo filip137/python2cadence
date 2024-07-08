@@ -13,6 +13,7 @@ import matplotlib.pyplot as plt
 
 
 from eldo_support_functions import *
+from plots_eldo import *
 from non_thread_approach import *
 from plots_eldo import *
 from datasets import *
@@ -48,8 +49,8 @@ def nudged_free_phase(X, Y, input_sample, output_dir, num_iterations, input_node
     all_deltaV_free2 = []
     all_deltaV_nudged2 = []
     accumulated_resistances = {}
-    my_results_free = None
-    my_results_nudged = None
+    my_results_free = []
+    my_results_nudged = []
     target_results = []
     
     
@@ -80,7 +81,7 @@ def nudged_free_phase(X, Y, input_sample, output_dir, num_iterations, input_node
         
         #extract the results
         mode = "get_voltage"
-        free_node_voltages = extract_results(eldo_process, mode, node_voltages, resistor_value_dict)
+        free_node_voltages = extract_results(eldo_process, mode, node_voltages, resistor_value_dict) #contains voltages at nodes at the end of free phase
         update_resistor_list(resistors_list, free_node_voltages)  # Pass these node voltages to the resistor list to connect them with appropriate nodes and keys
         voltage_matrix_free = resistor_voltage_array(resistors_list)  # Update a matrix that contains voltage differences with res (and fet) keys
 
@@ -91,31 +92,32 @@ def nudged_free_phase(X, Y, input_sample, output_dir, num_iterations, input_node
 
         # Nudge phase
         mode = "nudge"
-        set_eldo_simulation(eldo_process, mode, input_values, resistor_value_dict, inudge_dict)
+        set_eldo_simulation(eldo_process, mode, voltage_source_values, resistor_value_dict, inudge_dict)
         run_eldo_simulation(eldo_process)
         wait_for_eldos_completion(eldo_process)
 
 
         #Extract the results
         mode = "get_voltage"
-        nudge_node_voltages = extract_results(eldo_process, mode, node_voltages, resistor_value_dict)
+        nudge_node_voltages = extract_results(eldo_process, mode, node_voltages, resistor_value_dict)#contains voltages at the nodes at the end of nudge phase
         update_resistor_list(resistors_list, nudge_node_voltages)  # Pass these node voltages to the resistor list to connect them with appropriate nodes and keys
         voltage_matrix_nudge = resistor_voltage_array(resistors_list)  # Update a matrix that contains voltage differences with res (and fet) keys
         
         
         #update the resistances
-        mode = "set_resistances"
+        mode = "get_resistance"
         resistor_value_dict = extract_results(eldo_process, mode, node_voltages, resistor_value_dict)
-        cond_update = calc_cond_update(voltage_matrix_free, nudge_node_voltages, gamma, beta)
-        resistor_value_dict =  update_resistor_value_dict(resistor_value_dict, cond_update)
-        set_eldo_simulation(eldo_process, mode, input_values, resistor_value_dict,  inudge_dict)
+        cond_update = calc_cond_update(voltage_matrix_free, voltage_matrix_nudge, gamma, beta)
+        resistor_value_dict =  update_resistor_value_dict(resistor_value_dict, cond_update) 
+        mode = "set_resistances"
+        set_eldo_simulation(eldo_process, mode, voltage_source_values, resistor_value_dict,  inudge_dict)
             
         
 
         
 
         
-        sse = calculate_sse(losses, X_vec)
+        sse = calculate_single_sse(losses)
         sse_values.append(sse)
         all_losses.append(losses)
             
@@ -147,8 +149,8 @@ def nudged_free_phase(X, Y, input_sample, output_dir, num_iterations, input_node
 
 
     delete_output_directory(output_dir)
-    plot_sse(sse_values, beta, gamma)
-    plot_free_and_nudged(my_results, my_results_nudged, output_nodes, beta, gamma)
+    plot_sse_values(sse_values, gamma, beta)
+    plot_free_and_nudged(my_results_free, my_results_nudged, output_nodes, beta, gamma)
     plot_resistance_changes(accumulated_resistances, beta, gamma)
     plot_conductance_changes(accumulated_resistances, beta, gamma)
     plot_resistance_changes_log(accumulated_resistances, beta, gamma)
@@ -163,7 +165,7 @@ def nudged_free_phase(X, Y, input_sample, output_dir, num_iterations, input_node
 def main():
     num_samples = 200
     num_iterations = 100
-    X, Y = generate_dataset_2input_1output(num_samples)
+    X, Y = generate_dataset_2input_1output_random(num_samples)
     input_nodes = ["NET7", "NET9"]
     vol_sources = ["VDC1","VDC2"]
     #i_sources = ["INUDGE1", "INUDGE2"]
@@ -173,8 +175,8 @@ def main():
     input_sample="/home/filip/CMOS130/simulations/sample_files/eldo_samples/6_resistors.cir"
     output_dir="/home/filip/CMOS130/simulations/simulations"
     create_output_directory(output_dir)
-    beta=10e-4
-    gamma=10e-4
+    beta=10e-3
+    gamma=10e-7
     ## random or uniform
 
     nudged_free_phase(X, Y, input_sample, output_dir, num_iterations, input_nodes, i_sources, output_nodes, vol_sources, beta, gamma)    

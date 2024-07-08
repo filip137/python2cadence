@@ -188,12 +188,11 @@ def read_all_results(psf_ascii_results, nodes):
     results_matrix = np.column_stack(results)
     return results_matrix
             
-def loss_function(psf_ascii_results, Y_vec, outputs): ## can be improved to not open results files again
-    psf = PSF(psf_ascii_results)
+def loss_function(Y_vec, node_voltages, outputs): ## can be improved to not open results files again
     losses=[]
     for output in outputs:
         try:
-            outputV = psf.get_signal(output).ordinate.real
+            outputV = node_voltages[output]
             # Assuming Y_vec is either an array or a list with the same length as outputs
             if isinstance(Y_vec, (list, np.ndarray)):
                 loss = Y_vec[outputs.index(output)] - outputV

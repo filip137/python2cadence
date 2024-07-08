@@ -1,0 +1,40 @@
+Stack Trace Dump
+Program = /cao/Softs/mentor/ams/aol/bin/eldo_64.exe (v8.4_1.1)
+Date = Thu Jul  4 15:10:22 2024
+# Level    PC      Function Name+offset  filename
+#====================================================
+#   0  0x0000000000ca0f90: <unknown @0xca0f90>
+#   1  0x0000000000ca1018: eldo_dump_callstack+0x5f [eldo_64.exe]
+#   2  0x0000000000b608ec: FAULT_exit+0x243 [eldo_64.exe]
+#   3  0x00007f6f0005b630: +0xf630 [libpthread.so.0]
+#   4  0x00007f6efb18baec: cfree+0x1c [libc.so.6]
+#   5  0x00000000012d19a8: <unknown @0x12d19a8>
+#   6  0x00000000012d1a7e: <unknown @0x12d1a7e>
+#   7  0x00000000012d2b67: eldo_WDB_close+0x1b1 [eldo_64.exe]
+#   8  0x0000000001372e63: eldogwl_fmt_close+0x2a [eldo_64.exe]
+#   9  0x000000000127e669: tsdb_close_write_file_fmt+0x92 [eldo_64.exe]
+#  10  0x00000000012848a2: <unknown @0x12848a2>
+#  11  0x0000000001284910: tsdb_close_write_file+0x13 [eldo_64.exe]
+#  12  0x0000000000fca88b: eldo_close_vcou+0x3e [eldo_64.exe]
+#  13  0x0000000000fca98f: close_bineldo+0x9 [eldo_64.exe]
+#  14  0x0000000000b5f8dc: <unknown @0xb5f8dc>
+#  15  0x0000000000b613ab: QUIT_exit+0x191 [eldo_64.exe]
+#  16  0x00007f946f325400: +0x36400 [libc.so.6]
+#  17  0x00007f946f3dea1d: __write+0x2d [libc.so.6]
+#  18  0x00007f946f369263: _IO_file_write+0x43 [libc.so.6]
+#  19  0x00007f946f36aa7e: _IO_do_write+0xbe [libc.so.6]
+#  20  0x00007f946f3688b8: _IO_file_sync+0xb8 [libc.so.6]
+#  21  0x00007f946f35d6b3: fflush+0x93 [libc.so.6]
+#  22  0x000000000136c2b4: ei_print_eldo_prompt+0x56 [eldo_64.exe]
+#  23  0x0000000000b844ff: eldo_debug_gets+0xd9 [eldo_64.exe]
+#  24  0x000000000105dfdc: eldo_end_simu+0x1363 [eldo_64.exe]
+#  25  0x00000000010655e2: eldo_loop_simus+0x2dc [eldo_64.exe]
+#  26  0x0000000001065d4d: eldoprince+0x71f [eldo_64.exe]
+#  27  0x00000000008bc983: aeldosub+0x64d [eldo_64.exe]
+#  28  0x000000000136cee1: main+0x71 [eldo_64.exe]
+#  29  0x00007f946f311555: __libc_start_main+0xf5 [libc.so.6]
+#  30  0x000000000136cee1: main+0x71 [eldo_64.exe]
+#  31  0x00007f9a9d476555: __libc_start_main+0xf5 [libc.so.6]
+#  32  0x0000000000893a59: <unknown @0x893a59>
+# End of Stack Trace
+

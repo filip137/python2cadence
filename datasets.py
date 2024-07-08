@@ -1,0 +1,89 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Fri Jun 28 12:46:53 2024
+
+@author: filip
+"""
+
+import numpy as np
+import os
+import matplotlib.pyplot as plt
+import argparse
+import time
+import subprocess
+import shutil
+import glob
+from sklearn.datasets import load_iris
+import pandas as pd
+"""
+PLOTTING FUNCTIONS 
+
+"""
+
+def generate_dataset(num_samples, mode):
+    np.random.seed(2)
+    # Randomly generate currents I1 and I2 within a reasonable range
+    if mode == "linear_reg":
+        V1 = np.random.uniform(0, 5, num_samples)  
+        V2 = np.random.uniform(0, 5, num_samples)  
+    if mode == "uniform":
+    # Initially create 2-dimensional arrays with half the required samples
+        V1 = np.ones((num_samples // 2, 1)) * 5  
+        V2 = np.ones((num_samples // 2, 1)) * 5 
+    
+    # Generate random data and reshape immediately to match V1 and V2's 2D shape
+        rndm1 = np.random.uniform(1, 5, num_samples // 2).reshape(-1, 1)
+        rndm2 = np.random.uniform(1, 5, num_samples // 2).reshape(-1, 1)
+    
+    # Vertically stack the original and random data
+        V1 = np.vstack((V1, rndm1))
+        V2 = np.vstack((V2, rndm2))
+
+    # Flatten the arrays to make them 1-dimensional
+        V1 = V1.flatten()
+        V2 = V2.flatten()
+    if mode == "snapshot":
+        V1 = np.linspace(1, 5, num_samples)  
+        V2 = np.linspace(1, 5, num_samples)        
+    if mode == "zeros":
+        V1 = np.random.uniform(1, 5, num_samples)  
+        V2 = np.random.uniform(1, 5, num_samples)         
+        VD1 = np.zeros(num_samples)  
+        VD2 = np.zeros(num_samples)    
+    # Calculate VD1 and VD2 based on the given formulas
+    VD1 = 0.15 * V1  + 0.20 * V2 
+    VD2 = 0.25 * V1  + 0.1 * V2
+    # VD2=np.ones((num_samples,1))
+    # Combine I1 and I2 into a single input feature matrix, and VD1 and VD2 into a targets matrix
+    X = np.column_stack((V1, np.zeros([num_samples,1]), V2)) #node1 node4 node7
+    Y = np.column_stack((VD1, VD2))
+
+    return X, Y
+
+def generate_dataset_2input_1output(num_samples):
+    V1 = np.ones(num_samples)*5
+    V2 = np.ones(num_samples)*0
+    X = np.column_stack((V1, V2))
+    #Y = V1.reshape(-1,1)
+    Y = V1.reshape(-1,1)/4
+    return X, Y
+
+
+def generate_dataset2(num_samples):
+    # Generate inputs
+
+    X = np.random.uniform(2, 6, num_samples)
+    Y = X/5
+    
+    X = X.reshape(-1, 1)  # Reshape X to be num_samples x 1
+    Y = Y.reshape(-1, 1)  # Reshape Y to be num_samples x 1
+
+    return X, Y
+
+def accumulate_resistance_values(iteration_resistances, accumulated_resistances):
+    for key, value in iteration_resistances.items():
+        if key in accumulated_resistances:
+            accumulated_resistances[key].append(value)
+        else:
+            accumulated_resistances[key] = [value]

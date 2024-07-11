@@ -178,8 +178,25 @@ def create_node_voltage_dict(resistors_list):
 
     return node_voltage_dict
 
-
-
+def initialize_res(resistor_value_dict, low_bound, up_bound, uni_res, mode1):
+    
+    
+    numb_of_res = len(resistor_value_dict)
+    
+    if mode1 == "random":
+        res_values = np.random.uniform(low_bound, up_bound, numb_of_res)
+        for i, key in enumerate(resistor_value_dict.keys()):
+            resistor_value_dict[key] = res_values[i]
+    if mode1 == "uniform":
+        res_value = uni_res
+        for key in resistor_value_dict.keys():
+            resistor_value_dict[key] = res_value
+    if mode1 == "custom":
+        res_values = uni_res
+        for i, key in enumerate(resistor_value_dict.keys()):
+            resistor_value_dict[key] = res_values[i]
+    
+    
 
 def loss_function(Y_vec, node_voltages, output_nodes):
     #note that Y_vec must have correspond to the results in the same order as the node_voltages or the output do
@@ -204,6 +221,67 @@ def loss_function(Y_vec, node_voltages, output_nodes):
     # Return the dictionary of losses
     return losses
 
+
+def loss_function_xor(Y_vec, node_voltages, output_nodes):
+    #note that Y_vec must have correspond to the results in the same order as the node_voltages or the output do
+    losses = {}
+
+    # Check if Y_vec is a list or numpy array and has the same length as outputs
+    # if not isinstance(Y_vec, (list, np.ndarray)):
+    #     raise ValueError("Y_vec must be a list or numpy array.")
+    # if len(Y_vec) != len(output_nodes):
+    #     raise ValueError("Y_vec and outputs must have the same length.")
+        
+    pos_output = output_nodes[0]
+    pos_outputV = node_voltages[pos_output]
+    neg_output = output_nodes[1]
+    neg_outputV = node_voltages[neg_output]
+    
+    true_output = pos_outputV - neg_outputV
+    
+    if true_output > 0.5:
+        pred_output = 1
+    else:
+        pred_output = 0
+    
+        
+    
+    pos_loss = true_output - Y_vec
+    neg_loss = -pos_loss
+    losses[output_nodes[0]] = float(pos_loss)
+    losses[output_nodes[1]] = float(neg_loss)
+    # Return the dictionary of losses
+    
+    return losses
+
+def calculate_accuracy(pred_outputs, true_outputs):
+    correct_count = 0
+    total = len(pred_outputs)  # Assuming both lists are the same length
+
+    # Iterate through both lists and count matches
+    for pred, true in zip(pred_outputs, true_outputs):
+        if pred == true:
+            correct_count += 1
+
+    # Calculate accuracy
+    accuracy = correct_count / total * 100  # Multiply by 100 to get percentage
+    return accuracy
+
+def predicted_value(node_voltages, output_nodes):
+    pos_output = output_nodes[0]
+    pos_outputV = node_voltages[pos_output]
+    neg_output = output_nodes[1]
+    neg_outputV = node_voltages[neg_output]
+    
+    true_output = pos_outputV - neg_outputV
+    
+    if true_output > 0.5:
+        pred_output = 1
+    else:
+        pred_output = 0
+        
+    return pred_output
+
 def create_inudge_dict(losses, node_to_inudge, beta):
     inudge_dict = {}
     
@@ -211,7 +289,7 @@ def create_inudge_dict(losses, node_to_inudge, beta):
     # Check if losses is None
     if losses is None:
     # Set all inudge values to 0
-        for inudge in node_to_inudge.keys():
+        for inudge in node_to_inudge.values():
             inudge_dict[inudge] = 0
 
     # Iterate through the inudge_map dictionary
@@ -226,6 +304,63 @@ def create_inudge_dict(losses, node_to_inudge, beta):
 
     # Return the inudge dictionary
     return inudge_dict
+
+
+
+
+# def create_vnudge_dict(losses, node_to_vnudge, beta):
+#     vnudge_dict = {}
+    
+    
+#     # Check if losses is None
+#     if losses is None:
+#     # Set all inudge values to 0
+#         for inudge in node_to_inudge.keys():
+#             inudge_dict[inudge] = 0
+
+#     # Iterate through the inudge_map dictionary
+#     else:
+#         for output, vnudge in node_to_vnudge.items():
+#             try:
+#                 loss = losses[output]
+#                 vnudge_dict[ouput] = -beta * loss
+#             except KeyError:
+#                 print(f"Error: No node named {output}")
+#                 vnudge_dict[vnudge] = np.nan  # Use np.nan to handle errors but keep the array operations valid
+
+#     # Return the inudge dictionary
+#     return vnudge_dict
+
+
+
+
+
+def create_inudge_dict_const(losses, node_to_inudge, beta, inj_curr):
+    inudge_dict = {}
+    
+    
+    # Check if losses is None
+    if losses is None:
+    # Set all inudge values to 0
+        for inudge in node_to_inudge.keys():
+            inudge_dict[inudge] = 0
+
+    # Iterate through the inudge_map dictionary
+    else:
+        for output, inudge in node_to_inudge.items():
+            try:
+                loss = losses[output]
+                inudge_dict[inudge] = -inj_curr * np.sign(loss)
+            except KeyError:
+                print(f"Error: No node named {output}")
+                inudge_dict[inudge] = np.nan  # Use np.nan to handle errors but keep the array operations valid
+
+    # Return the inudge dictionary
+    return inudge_dict
+
+
+
+
 
 # def update_inudge_values(node_to_inudge, outputs, losses, beta):
 #     inudge_dict = {}
@@ -271,7 +406,6 @@ def calc_cond_update(voltage_matrix_f, voltage_matrix_n, gamma, beta):
     deltaV_f = voltage_matrix_f['voltage1'] - voltage_matrix_f['voltage2']
     deltaV_n = voltage_matrix_n['voltage1'] - voltage_matrix_n['voltage2']
     cond_update_values = - gamma / beta * (deltaV_n ** 2 - deltaV_f ** 2) ##negative update value for cond
-    cond_update_values = cond_update_values 
 
     cond_update = {}
 
@@ -293,7 +427,7 @@ def update_resistor_value_dict(resistor_value_dict, cond_update):
     for key, resistance in resistor_value_dict.items():
         # Skip updating if resistance is zero or negative to avoid division by zero
         if resistance <= 0:
-            print(f"Warning: Resistance for {key} is non-positive, skipping update.")
+            #print(f"Warning: Resistance for {key} is non-positive, skipping update.")
             continue
         
         try:
@@ -301,18 +435,18 @@ def update_resistor_value_dict(resistor_value_dict, cond_update):
             cond_value = 1 / resistance
             cond_upd = cond_update[key]
             new_cond = cond_value + cond_upd
-            
+            new_res = 1/new_cond
             # Avoid division by zero or negative conductance
-            if new_cond <= 0:
-                print(f"Warning: New conductance for {key} is non-positive, skipping update.")
-                new_res = 10e7
-            else:
-                new_res = 1 / new_cond
+            # if new_cond <= 0:
+            #     print(f"Warning: New conductance for {key} is non-positive, skipping update.")
+            #     new_res = 10e7
+            # else:
+            #     new_res = 1 / new_cond
                 
             # Ensure the new resistance is within a reasonable range
             if new_res < 0 or new_res > 10e7:
                 new_res = 10e7
-                print(f"Warning: New resistance for {key} is out of range, keeping the original resistance.")
+             #   print(f"Warning: New resistance for {key} is out of range, keeping the original resistance.")
                 
             # Update the resistor value
             resistor_value_dict[key] = new_res

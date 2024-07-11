@@ -66,16 +66,45 @@ def generate_dataset_2input_1output(num_samples):
     V2 = np.ones(num_samples)*0
     X = np.column_stack((V1, V2))
     #Y = V1.reshape(-1,1)
-    Y = V1.reshape(-1,1)/4
+    Y = V1.reshape(-1,1)/2
     return X, Y
 
 
+def generate_xor_data(num_samples):
+    """
+    Generate a dataset for the XNOR function with specific encoding:
+    0 is encoded as -2 and 1 as 2.
+    
+    Args:
+    num_samples (int): Number of (input, output) pairs to generate.
+    
+    Returns:
+    X (numpy.ndarray): The encoded input pairs.
+    y (numpy.ndarray): The corresponding XNOR outputs.
+    """
+    # Randomly generate 0s and 1s for two inputs
+    X = np.random.randint(0, 2, size=(num_samples, 2))
+
+    # Apply the encoding: 0 -> -2 and 1 -> 2
+    X_encoded = np.where(X == 0, -2, 2)
+    
+    # Compute the XNOR output
+    # XOR is true if both bits are the same
+    y = np.not_equal(X[:, 0], X[:, 1]).astype(float)
+    y = y.reshape(-1,1)
+    # Apply encoding to the output as well: 0 -> -2, 1 -> 2
+    return X_encoded, y
+
+
+
+
 def generate_dataset_2input_1output_random(num_samples):
+    np.random.seed(42)
     V1 = np.random.uniform(0,5, num_samples)
     V2 = np.ones(num_samples)*0
     X = np.column_stack((V1, V2))
     #Y = V1.reshape(-1,1)
-    Y = V1.reshape(-1,1)
+    Y = V1.reshape(-1,1)/4
     return X, Y
 
 

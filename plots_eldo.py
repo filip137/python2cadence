@@ -151,7 +151,41 @@ def plot_conductance_changes_log(resistances_over_time, beta, gamma):
         iterations = range(1, len(values) + 1)
         # Plot the conductance changes over iterations
         plt.plot(iterations, values, marker='o', linestyle='-', label=resistor)
+
+    # Set the y-axis to a logarithmic scale
+    plt.yscale('log')
+
+    # Add title and labels
+    plt.title(f'Conductance Changes Over Time (beta={beta}, gamma={gamma})')
+    plt.xlabel('Iterations')
+    plt.ylabel('Conductance (S)')
+
+    # Add a legend
+    plt.legend()
+
+    # Display the plot
+    plt.show()
+ 
+def plot_accuracy(accuracy_after_epoch):
+    """
+    Plots the accuracy after each epoch.
+
+    Parameters:
+    accuracy_after_epoch (list of float): List of accuracies recorded after each epoch.
+    """
+    epochs = list(range(1, len(accuracy_after_epoch) + 1))
     
+    plt.figure(figsize=(10, 6))
+    plt.plot(epochs, accuracy_after_epoch, marker='o', linestyle='-', color='b')
+    plt.title('Accuracy After Each Epoch')
+    plt.xlabel('Epoch')
+    plt.ylabel('Accuracy')
+    plt.grid(True)
+    plt.xticks(epochs)  # Ensure each epoch is marked on the x-axis
+    plt.show()
+ 
+    
+ 
 def plot_free_and_nudged(my_results_free, my_results_nudged, output_nodes, beta, gamma):
     # Validate input
     if not my_results_free or not my_results_nudged:

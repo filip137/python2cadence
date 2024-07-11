@@ -4,7 +4,7 @@ import re
 
 import os
 
-def start_eldo_simulation(sample_file, output_dir):
+def start_eldo_simulation(sample_file, output_dir, debug):
     """Starts the Eldo simulation subprocess in interactive mode, ensuring directory exists."""
     try:
         # Manually set the PATH to include the directory where Eldo is located
@@ -27,10 +27,10 @@ def start_eldo_simulation(sample_file, output_dir):
         print(f"Error starting Eldo simulation: {e}")
         return None
 
-def send_command_to_eldo(process, command):
+def send_command_to_eldo(process, command, debug):
     """Sends a command to the Eldo subprocess, ensuring it's still open."""
     if process.poll() is None:  # None means the process is still running
-        print(f"Sending command: {command}")
+        if debug: print(f"Sending command: {command}")
         try:
             process.stdin.write(command + "\n")
             process.stdin.flush()
@@ -39,30 +39,94 @@ def send_command_to_eldo(process, command):
     else:
         print("Cannot send command, subprocess has terminated.")
         
-def set_eldo_simulation(process, mode, input_values, resistor_value_dict,  inudge_dict):
+def set_eldo_simulation(process, mode, input_values, resistor_value_dict,  inudge_dict, debug):
     """Sets the simulation parameters for the Eldo process."""
     try:
         if mode == "free":
             for vol_source, vol in input_values.items():
                 eldo_command = f"SET P ({vol_source}) = {vol}"
-                send_command_to_eldo(process, eldo_command)
+                send_command_to_eldo(process, eldo_command, debug)
             for inudge, curr in inudge_dict.items():
                 eldo_command = f"SET P ({inudge}) = 0"
-                send_command_to_eldo(process, eldo_command)
+                send_command_to_eldo(process, eldo_command, debug)
         elif mode == "nudge":
             for inudge, curr in inudge_dict.items():
                 eldo_command = f"SET P ({inudge}) = {curr}"
-                send_command_to_eldo(process, eldo_command)
+                send_command_to_eldo(process, eldo_command, debug)
 
         elif mode == "set_resistances":
             for res_key, res_value in resistor_value_dict.items():
                 eldo_command = f"SET P ({res_key}) = {res_value}"
-                send_command_to_eldo(process, eldo_command)
+                send_command_to_eldo(process, eldo_command, debug)
 
     except Exception as e:
         print(f"An unexpected error occurred: {e}")
+        
+def set_input_voltages(process, input_values, debug):
+    """Sets simulation parameters in 'free' mode."""
+    for vol_source, vol in input_values.items():
+        eldo_command = f"SET P ({vol_source}) = {vol}"
+        send_command_to_eldo(process, eldo_command, debug)
 
-def read_eldo_output(process, stop_here):
+def disable_current_sources(process, inudge_dict, debug):
+    """Disables current sources in simulation."""
+    for inudge in inudge_dict.keys():
+        eldo_command = f"SET P ({inudge}) = 0"
+        send_command_to_eldo(process, eldo_command, debug)
+
+def set_currents_nudge_mode(process, inudge_dict, debug):
+    """Sets current values in 'nudge' mode."""
+    for inudge, curr in inudge_dict.items():
+        eldo_command = f"SET P ({inudge}) = {curr}"
+        send_command_to_eldo(process, eldo_command, debug)
+
+def set_resistances(process, resistor_value_dict, debug):
+    """Sets resistance values for the simulation."""
+    for res_key, res_value in resistor_value_dict.items():
+        eldo_command = f"SET P ({res_key}) = {res_value}"
+        send_command_to_eldo(process, eldo_command, debug)
+
+
+def set_all_parameters(process, parameter_dict, debug):
+    for par_key, par_value in parameter_dict.items():
+        eldo_command = f"SET P ({par_key}) = {par_value}"
+        send_command_to_eldo(process, eldo_command, debug)
+        
+
+
+
+
+
+
+
+        
+def set_eldo_initial(process, mode, resistor_value_dict, debug):
+    """Sets the simulation parameters for the Eldo process."""
+    try:
+        # if mode == "free":
+        #     for vol_source, vol in input_values.items():
+        #         eldo_command = f"SET P ({vol_source}) = {vol}"
+        #         send_command_to_eldo(process, eldo_command)
+        #     for inudge, curr in inudge_dict.items():
+        #         eldo_command = f"SET P ({inudge}) = 0"
+        #         send_command_to_eldo(process, eldo_command)
+        # elif mode == "nudge":
+        #     for inudge, curr in inudge_dict.items():
+        #         eldo_command = f"SET P ({inudge}) = {curr}"
+        #         send_command_to_eldo(process, eldo_command)
+
+        if mode == "set_resistances":
+            for res_key, res_value in resistor_value_dict.items():
+                eldo_command = f"SET P ({res_key}) = {res_value}"
+                send_command_to_eldo(process, eldo_command, debug)
+
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
+        
+        
+        
+
+def read_eldo_output(process, stop_here, debug):
     """Reads output from the Eldo subprocess until the prompt appears, storing only the second to last line."""
     last_line = None  # This will store the last line
     second_to_last_line = None  # This will store the second to last line
@@ -70,7 +134,7 @@ def read_eldo_output(process, stop_here):
     while True:  # Use a loop to keep reading until the prompt is found
         line = process.stdout.readline().strip()
         if line:
-          #  print(f"Reading output: {line}")
+            if debug: print(f"Reading output: {line}")
             if stop_here in line:  # Check for the prompt indicating ready for next command
                 break  # Exit the loop when the prompt is detected
     
@@ -78,26 +142,26 @@ def read_eldo_output(process, stop_here):
 
 
 
-def run_eldo_simulation(process):
+def run_eldo_simulation(process, debug):
     """Runs the Eldo simulation."""
     try:
-        send_command_to_eldo(process, "GO")
+        send_command_to_eldo(process, "GO", debug)
     except Exception as e:
         print(f"An unexpected error occurred: {e}")
         
-def quit_eldo_simulation(process):
+def quit_eldo_simulation(process, debug):
     """QUITS the Eldo simulation."""
     try:
-        send_command_to_eldo(process, "QUIT")
+        send_command_to_eldo(process, "QUIT", debug)
     except Exception as e:
         print(f"An unexpected error occurred: {e}")
         
-def extract_results(process, mode, node_voltages, resistor_value_dict):
+def extract_results(process, mode, node_voltages, resistor_value_dict, debug):
     if mode == "get_resistance":
         for resistor in resistor_value_dict.keys():
             eldo_command = f"PRINT P({resistor})"
-            send_command_to_eldo(process, eldo_command)
-            line = read_eldo_output(process, resistor)
+            send_command_to_eldo(process, eldo_command, debug)
+            line = read_eldo_output(process, resistor, debug)
            # print(f"Output line for resistor {resistor}: '{line}'")  # Debugging line
             
             # Regular expression pattern to match the resistor value
@@ -117,8 +181,8 @@ def extract_results(process, mode, node_voltages, resistor_value_dict):
         new_node_voltages = {}
         for node in node_voltages.keys():
             eldo_command = f"PRINT V({node})"
-            send_command_to_eldo(process, eldo_command)
-            line = read_eldo_output(process, node)
+            send_command_to_eldo(process, eldo_command, debug)
+            line = read_eldo_output(process, node, debug)
             
             # Regular expression pattern to match the node voltage value
             pattern = rf"{node}\s+([0-9.eE+-]+)"
@@ -135,7 +199,7 @@ def extract_results(process, mode, node_voltages, resistor_value_dict):
                 print(f"Error retrieving voltage for {node}: {line}")
         return new_node_voltages
     
-def wait_for_eldos_completion(process):
+def wait_for_eldos_completion(process, debug):
     """
     Waits until the specified completion message is found in the process output.
     """
@@ -144,7 +208,7 @@ def wait_for_eldos_completion(process):
     while True:
         line = process.stdout.readline().strip()
         if line:
-            print(f"Reading output: {line}")
+            if debug: print(f"Reading output: {line}")
             if completion_message in line:
              #   print("Completion message detected.")
                 break

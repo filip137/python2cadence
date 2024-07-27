@@ -16,10 +16,38 @@ import shutil
 import glob
 from sklearn.datasets import load_iris
 import pandas as pd
-"""
-PLOTTING FUNCTIONS 
+from sklearn.datasets import make_moons
+from sklearn.model_selection import train_test_split
 
-"""
+
+
+
+def prepare_moons_data(n_samples, noise=0.1, random_state=42):
+    # Generate the moons dataset
+    X, Y = make_moons(n_samples=n_samples, noise=noise, random_state=random_state)
+    Y_column = Y.reshape(-1,1)
+    # Split the data: 60% for training, 40% for validation and test
+    #X_train, X_temp, Y_train, Y_temp = train_test_split(X, Y, test_size=0.4, random_state=random_state)
+    
+    # Split the remaining 40%: 20% for validation, 20% for test
+    #X_val, X_test, Y_val, Y_test = train_test_split(X_temp, Y_temp, test_size=0.5, random_state=random_state)
+    return X, Y_column
+
+    
+def generate_biased_inputs(X, Y, scale_factor):
+    X_scaled = scale_factor * X
+    Y_scaled =  Y
+    X_bias = scale_factor * (1-X)
+    X_in = np.hstack((X_scaled, X_bias))
+    return X_in, Y_scaled
+
+def main():
+    prepare_moons_data(10, 2, noise=0.1, bias = True, random_state=42)
+if __name__ == "__main__":
+    main()    
+
+
+
 
 def generate_dataset(num_samples, mode):
     np.random.seed(2)
@@ -83,6 +111,7 @@ def generate_xor_data(num_samples):
     y (numpy.ndarray): The corresponding XNOR outputs.
     """
     # Randomly generate 0s and 1s for two inputs
+    np.random.seed(137)
     X = np.random.randint(0, 2, size=(num_samples, 2))
 
     # Apply the encoding: 0 -> -2 and 1 -> 2

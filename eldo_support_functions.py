@@ -246,8 +246,41 @@ def loss_function_xor(Y_vec, node_voltages, output_nodes):
     
         
     
-    pos_loss = true_output - Y_vec
+    pos_loss = Y_vec - true_output #measured - target
     neg_loss = -pos_loss
+    losses[output_nodes[0]] = float(pos_loss)
+    losses[output_nodes[1]] = float(neg_loss)
+    # Return the dictionary of losses
+    
+    return losses
+
+
+def loss_function_moon(Y_vec, node_voltages, output_nodes):
+    #note that Y_vec must have correspond to the results in the same order as the node_voltages or the output do
+    losses = {}
+
+    # Check if Y_vec is a list or numpy array and has the same length as outputs
+    # if not isinstance(Y_vec, (list, np.ndarray)):
+    #     raise ValueError("Y_vec must be a list or numpy array.")
+    # if len(Y_vec) != len(output_nodes):
+    #     raise ValueError("Y_vec and outputs must have the same length.")
+        
+    pos_output = output_nodes[0]
+    pos_outputV = node_voltages[pos_output]
+    neg_output = output_nodes[1]
+    neg_outputV = node_voltages[neg_output]
+    
+    true_output = pos_outputV - neg_outputV #this is okay
+    
+    if abs(true_output) > 0.5:
+        pred_output = 1
+    else:
+        pred_output = 0
+    
+        
+    
+    pos_loss = true_output - Y_vec #Here Y_vec will be 0 or 1
+    neg_loss = -pos_loss # negative loss will be the minus of positive loss
     losses[output_nodes[0]] = float(pos_loss)
     losses[output_nodes[1]] = float(neg_loss)
     # Return the dictionary of losses
@@ -275,12 +308,24 @@ def predicted_value(node_voltages, output_nodes):
     
     true_output = pos_outputV - neg_outputV
     
-    if true_output > 0.5:
+    if abs(true_output) > 0.5:
         pred_output = 1
     else:
         pred_output = 0
         
     return pred_output
+
+def voltage_values(node_voltages, output_nodes):
+    pos_output = output_nodes[0]
+    pos_outputV = node_voltages[pos_output]
+    neg_output = output_nodes[1]
+    neg_outputV = node_voltages[neg_output]
+    
+        
+    return pos_outputV, neg_outputV
+
+
+
 
 def create_inudge_dict(losses, node_to_inudge, beta):
     inudge_dict = {}
@@ -297,7 +342,7 @@ def create_inudge_dict(losses, node_to_inudge, beta):
         for output, inudge in node_to_inudge.items():
             try:
                 loss = losses[output]
-                inudge_dict[inudge] = -beta * loss
+                inudge_dict[inudge] = beta * loss
             except KeyError:
                 print(f"Error: No node named {output}")
                 inudge_dict[inudge] = np.nan  # Use np.nan to handle errors but keep the array operations valid
@@ -350,7 +395,7 @@ def create_inudge_dict_const(losses, node_to_inudge, beta, inj_curr):
         for output, inudge in node_to_inudge.items():
             try:
                 loss = losses[output]
-                inudge_dict[inudge] = -inj_curr * np.sign(loss)
+                inudge_dict[inudge] = inj_curr * np.sign(loss)
             except KeyError:
                 print(f"Error: No node named {output}")
                 inudge_dict[inudge] = np.nan  # Use np.nan to handle errors but keep the array operations valid

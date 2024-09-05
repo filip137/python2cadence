@@ -255,7 +255,7 @@ def loss_function_xor(Y_vec, node_voltages, output_nodes):
     return losses
 
 
-def loss_function_moon(Y_vec, node_voltages, output_nodes):
+def loss_function_moon(Y_vec, node_voltages, output_nodes, boundary):
     #note that Y_vec must have correspond to the results in the same order as the node_voltages or the output do
     losses = {}
 
@@ -272,14 +272,14 @@ def loss_function_moon(Y_vec, node_voltages, output_nodes):
     
     true_output = pos_outputV - neg_outputV #this is okay
     
-    if abs(true_output) > 0.5:
+    if true_output > boundary:
         pred_output = 1
     else:
         pred_output = 0
     
         
     
-    pos_loss = true_output - Y_vec #Here Y_vec will be 0 or 1
+    pos_loss = Y_vec - true_output #Here Y_vec will be 0 or 1
     neg_loss = -pos_loss # negative loss will be the minus of positive loss
     losses[output_nodes[0]] = float(pos_loss)
     losses[output_nodes[1]] = float(neg_loss)
@@ -300,7 +300,7 @@ def calculate_accuracy(pred_outputs, true_outputs):
     accuracy = correct_count / total * 100  # Multiply by 100 to get percentage
     return accuracy
 
-def predicted_value(node_voltages, output_nodes):
+def predicted_value(node_voltages, output_nodes, boundary):
     pos_output = output_nodes[0]
     pos_outputV = node_voltages[pos_output]
     neg_output = output_nodes[1]
@@ -308,7 +308,7 @@ def predicted_value(node_voltages, output_nodes):
     
     true_output = pos_outputV - neg_outputV
     
-    if abs(true_output) > 0.5:
+    if true_output > boundary:
         pred_output = 1
     else:
         pred_output = 0
@@ -458,7 +458,7 @@ def calc_cond_update(voltage_matrix_f, voltage_matrix_n, gamma, beta):
     for i in range(len(resistor_names)):
         if resistor_names[i].startswith('RESL'):
             cond_update[resistor_names[i]] = 0  # Set to 0 if the resistor name starts with 'RESL'
-        elif resistor_names[i].startswith('RES') or resistor_names[i].startswith('fet'):
+        elif resistor_names[i].startswith('R_') or resistor_names[i].startswith('fet'):
             if not np.isnan(cond_update_values[i]):
                 cond_update[resistor_names[i]] = cond_update_values[i]
         else:
@@ -480,7 +480,7 @@ def update_resistor_value_dict(resistor_value_dict, cond_update):
             cond_value = 1 / resistance
             cond_upd = cond_update[key]
             new_cond = cond_value + cond_upd
-            new_res = 1/new_cond
+            new_res = 1 / new_cond
             # Avoid division by zero or negative conductance
             # if new_cond <= 0:
             #     print(f"Warning: New conductance for {key} is non-positive, skipping update.")

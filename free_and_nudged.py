@@ -17,6 +17,9 @@ from plots_eldo import *
 from non_thread_approach import *
 from plots_eldo import *
 from datasets import *
+from build_cis_file import neural_network
+
+
 
 import argparse
 import time
@@ -28,10 +31,23 @@ import random
 from sklearn.model_selection import train_test_split
 from multiprocessing import Process
 
-def nudged_free_phase(X, Y, input_sample, output_dir, num_of_epochs, input_nodes, i_sources, output_nodes, vol_sources, beta, gamma, debug):
+def nudged_free_phase(X, Y, input_sample, num_of_epochs, beta, gamma, debug, scale_factor, boundary):
+    
+    
+    input_nodes = ["VIN1", "VIN2", "VIN3", "VIN4", "VIN5", "VIN6", "VIN7", "VIN8"]   # Example input nodes
+    output_nodes = ["V_Y1", "V_Y2"]
+
+    vol_sources = ["VDC1", "VDC2", "VDC3", "VDC4", "VDC5", "VDC6", "VDC7", "VDC8"]   # Example voltage sources
+    i_sources = ["INUDGE_Y1", "INUDGE_Y2"]
+
+    output_dir="/home/filip/simulations/simulations"
+
+    
+    
+    
     ## gather the data about the network
-    X_train, X_temp, Y_train, Y_temp = train_test_split(X, Y, test_size=0.9, random_state=42)  # 60% training, 40% for validation and test
-    X_val, X_test, Y_val, Y_test = train_test_split(X_temp, Y_temp, test_size=0.5, random_state=42)# Splits remaining 40% into 20% validation, 20% test
+    X_train, X_temp, Y_train, Y_temp = train_test_split(X, Y, test_size=0.5, random_state=42, shuffle = False)  # 60% training, 40% for validation and test
+    X_val, X_test, Y_val, Y_test = train_test_split(X_temp, Y_temp, test_size=0.5, random_state=42, shuffle = False)# Splits remaining 40% into 20% validation, 20% test
     #X_test, Y_test = generate_all_combinations_xor()
     sample_file = input_sample
 
@@ -67,45 +83,60 @@ def nudged_free_phase(X, Y, input_sample, output_dir, num_of_epochs, input_nodes
     initialize_res(resistor_value_dict, low_bound, up_bound, uni_res = None, mode1 = "random")
     set_eldo_initial(eldo_process, mode, resistor_value_dict, debug)
     accuracy_after_epoch = []
+    batch_size = 10
     for j in range(0, num_of_epochs):
         
-        for i in range(0, X_train.shape[0]):        
-            X_vec = X_train[i, :]
-            Y_vec = Y_train[i, :] 
-        
-            mode = "free"
-        
-        
-            if i == 0:
-                inudge_dict = create_inudge_dict(losses, node_to_inudge, beta) #need to correct
-                mode = "get_resistance"
-                resistor_value_dict = extract_results(eldo_process, mode, node_voltages, resistor_value_dict, debug)
-                accumulate_resistance_values(resistor_value_dict, accumulated_resistances)
+        for i in range(0, X_train.shape[0], batch_size):
+        #for i in range(0, X_train.shape[0]):   
+            X_batch = X_train[i:i+batch_size]
+            Y_batch = Y_train[i:i+batch_size]
+            
+            batch_losses = []
+            total_loss = {}
+            
+            for k in range(0, X_batch.shape[0]):
                 mode = "free"
+                X_vec = X_batch[k, :]
+                Y_vec = Y_batch[k, :] 
+               # print(f"k: {k}, X_batch[k]: {X_batch[k]}")
+                if i == 0:
+                    inudge_dict = create_inudge_dict(losses, node_to_inudge, beta) #need to correct
+                    mode = "get_resistance"
+                    resistor_value_dict = extract_results(eldo_process, mode, node_voltages, resistor_value_dict, debug)
+                    accumulate_resistance_values(resistor_value_dict, accumulated_resistances)
+                    mode = "free"
                 
          
         #set up everything for the free phase
-            voltage_source_values = dict(zip(vol_sources, X_vec))
+                voltage_source_values = dict(zip(vol_sources, X_vec))
             #input_values = create_voltage_source_to_value_dict(node_to_vdc, X_vec)  
-            input_values = dict(zip(vol_sources, X_vec))
-            disable_current_sources(eldo_process, inudge_dict, debug)
-            set_input_voltages(eldo_process, input_values, debug)
+                input_values = dict(zip(vol_sources, X_vec))
+                disable_current_sources(eldo_process, inudge_dict, debug)
+                set_input_voltages(eldo_process, input_values, debug)
         
         
         #run simulation and wait for the results
-            run_eldo_simulation(eldo_process, debug)
-            wait_for_eldos_completion(eldo_process, debug)
+                run_eldo_simulation(eldo_process, debug)
+                wait_for_eldos_completion(eldo_process, debug)
         
         #extract the results
-            mode = "get_voltage"
-            free_node_voltages = extract_results(eldo_process, mode, node_voltages, resistor_value_dict, debug) #contains voltages at nodes at the end of free phase
-            update_resistor_list(resistors_list, free_node_voltages)  # Pass these node voltages to the resistor list to connect them with appropriate nodes and keys
-            voltage_matrix_free = resistor_voltage_array(resistors_list)  # Update a matrix that contains voltage differences with res (and fet) keys
+                mode = "get_voltage"
+                free_node_voltages = extract_results(eldo_process, mode, node_voltages, resistor_value_dict, debug) #contains voltages at nodes at the end of free phase
+                update_resistor_list(resistors_list, free_node_voltages)  # Pass these node voltages to the resistor list to connect them with appropriate nodes and keys
+                voltage_matrix_free = resistor_voltage_array(resistors_list)  # Update a matrix that contains voltage differences with res (and fet) keys
 
         #calculate the losses and the nudging current
             #losses = loss_function(Y_vec, free_node_voltages, output_nodes)
             #losses = loss_function_xor(Y_vec, free_node_voltages, output_nodes) # losses is a dictionary as well
-            losses = loss_function_moon(Y_vec, free_node_voltages, output_nodes)
+                batch_loss = loss_function_moon(Y_vec, free_node_voltages, output_nodes, boundary)
+                for key, value in batch_loss.items():
+                    if key in total_loss:
+                        total_loss[key] += value
+                    else:
+                        total_loss[key] = value
+                
+                
+            losses = {key: value / batch_size for key, value in total_loss.items()}
         #inj_curr = 10e-7
         #inudge_dict = create_inudge_dict_const(losses, node_to_inudge, beta, inj_curr)  # outputs dictionary that says to what current sources what values should be applied
             inudge_dict = create_inudge_dict(losses, node_to_inudge, beta)
@@ -127,7 +158,7 @@ def nudged_free_phase(X, Y, input_sample, output_dir, num_of_epochs, input_nodes
         #update the resistances
             mode = "get_resistance"
             resistor_value_dict = extract_results(eldo_process, mode, node_voltages, resistor_value_dict, debug)
-            cond_update = calc_cond_update(voltage_matrix_free, voltage_matrix_nudge, gamma, beta)
+            cond_update = calc_cond_update(voltage_matrix_free, voltage_matrix_nudge, gamma, beta) #be careful, the variables need to have a certain name
             resistor_value_dict =  update_resistor_value_dict(resistor_value_dict, cond_update) 
             mode = "set_resistances"
             set_resistances(eldo_process, resistor_value_dict, debug)
@@ -161,10 +192,10 @@ def nudged_free_phase(X, Y, input_sample, output_dir, num_of_epochs, input_nodes
         
             accumulate_resistance_values(resistor_value_dict, accumulated_resistances)
         
-        
-        accuracy = validate(eldo_process, X_test, Y_test, vol_sources, debug, resistor_value_dict, node_to_vdc, node_voltages, output_nodes)
+        disable_current_sources(eldo_process, inudge_dict, debug)
+        accuracy = validate(eldo_process, X_test, Y_test, vol_sources, debug, resistor_value_dict, node_to_vdc, node_voltages, output_nodes, boundary)
         accuracy_after_epoch.append(accuracy)
-        draw_grid(eldo_process, X_test, Y_test, vol_sources, debug, resistor_value_dict, node_to_vdc, node_voltages, output_nodes)
+        draw_grid(eldo_process, X_test, Y_test, vol_sources, debug, resistor_value_dict, node_to_vdc, node_voltages, output_nodes, j,scale_factor, boundary)
         
         
     # plot_resistance_changes(resistances_over_time)
@@ -203,43 +234,58 @@ def run_free_phase(eldo_process, X_train, Y_train, vol_sources, node_to_inudge, 
 
 
 
-def draw_grid(process, X_val, Y_val, vol_sources, debug, resistor_value_dict, node_to_vdc, node_voltages, output_nodes):
+def draw_grid(process, X_val, Y_val, vol_sources, debug, resistor_value_dict, node_to_vdc, node_voltages, output_nodes, j,scale_factor, boundary):
     
     # Define bounds of the domain
     min1, max1 = X_val[:, 0].min() - 0.1, X_val[:, 0].max() + 0.1
     min2, max2 = X_val[:, 1].min() - 0.1, X_val[:, 1].max() + 0.1
     
-    x1grid = np.arange(min1, max1, 0.1)
-    x2grid = np.arange(min2, max2, 0.1)
+    num_points = 30
+
+    x1grid = np.linspace(min1, max1, num_points)
+    x2grid = np.linspace(min2, max2, num_points)
+
+# Create a meshgrid from the grid points
     xx, yy = np.meshgrid(x1grid, x2grid)
-    r1, r2 = xx.flatten(), yy.flatten()
-    r1, r2 = r1.reshape((len(r1), 1)), r2.reshape((len(r2), 1))
-    grid = np.hstack((r1, r2))
-    
-    # Make predictions for the grid
-    y_predictions = predict(process, grid, vol_sources, debug, resistor_value_dict, node_to_vdc, node_voltages, output_nodes)
-    #Convert into an array
+    grid = np.c_[xx.ravel(), yy.ravel()]
+
+# Make predictions for the grid
+    y_predictions = predict(process, grid, vol_sources, debug, resistor_value_dict, node_to_vdc, node_voltages, output_nodes, boundary)
+
+# Convert predictions into an array and reshape back into a grid
     y_predictions = np.array(y_predictions)
-    # Reshape the predictions back into a grid
     zz = y_predictions.reshape(xx.shape)
-    # Plot the grid of x, y and z values as a surface
+
+# Plot the grid of x, y, and z values as a surface
     contour = plt.contourf(xx, yy, zz, cmap='Paired')
     cbar = plt.colorbar(contour)
     cbar.set_ticks([0, 1])
     cbar.set_ticklabels(['Class 0', 'Class 1'])
-    # Scatter plot for the validation set
-    plt.scatter(X_val[:, 0], X_val[:, 1], c=Y_val, edgecolor='k', marker='o', s=20)
-    
-    plt.title('Decision Boundary with True Samples')
+    Y_val = Y_val.ravel()
+# Separate the points by class
+    class0 = X_val[Y_val == 0]
+    class1 = X_val[Y_val == 1]
+
+# Scatter plot for the validation set with legend
+    plt.scatter(class0[:, 0], class0[:, 1], c='blue', edgecolor='k', marker='o', s=20, label='Class 0')
+    plt.scatter(class1[:, 0], class1[:, 1], c='red', edgecolor='k', marker='o', s=20, label='Class 1')
+
+# Add legend
+    plt.legend()
+
+# Add titles and labels
+    plt.title(f"Decision Boundary with True Samples after epoch {j} and scale factor{scale_factor}")
     plt.xlabel('VDC1')
     plt.ylabel('VDC2')
+
+# Show plot
     plt.show()
     
     
     
    
 
-def predict(process, X_val, vol_sources, debug, resistor_value_dict, node_to_vdc, node_voltages, output_nodes):
+def predict(process, X_val, vol_sources, debug, resistor_value_dict, node_to_vdc, node_voltages, output_nodes, boundary):
     
     set_resistances(process, resistor_value_dict, debug)
     
@@ -270,7 +316,7 @@ def predict(process, X_val, vol_sources, debug, resistor_value_dict, node_to_vdc
       
         #calculate the losses and the nudging current
         #losses = loss_function_moon(Y_vec, free_node_voltages, output_nodes) # losses is a dictionary as well
-        predicted_output = predicted_value(free_node_voltages, output_nodes)
+        predicted_output = predicted_value(free_node_voltages, output_nodes, boundary)
         pred_outputs.append(predicted_output)
         vol_values.append(voltage_values(free_node_voltages, output_nodes))
 
@@ -278,7 +324,7 @@ def predict(process, X_val, vol_sources, debug, resistor_value_dict, node_to_vdc
 
 
 
-def validate(process, X_val, Y_val, vol_sources, debug, resistor_value_dict, node_to_vdc, node_voltages, output_nodes):
+def validate(process, X_val, Y_val, vol_sources, debug, resistor_value_dict, node_to_vdc, node_voltages, output_nodes, boundary):
     
     set_resistances(process, resistor_value_dict, debug)
     
@@ -311,8 +357,8 @@ def validate(process, X_val, Y_val, vol_sources, debug, resistor_value_dict, nod
         #voltage_matrix_free = resistor_voltage_array(resistors_list)  # Update a matrix that contains voltage differences with res (and fet) keys
 
         #calculate the losses and the nudging current
-        losses = loss_function_moon(Y_vec, free_node_voltages, output_nodes) # losses is a dictionary as well
-        predicted_output = predicted_value(free_node_voltages, output_nodes)
+        losses = loss_function_moon(Y_vec, free_node_voltages, output_nodes, boundary) # losses is a dictionary as well
+        predicted_output = predicted_value(free_node_voltages, output_nodes, boundary)
         pred_outputs.append(predicted_output)
         true_outputs.append(Y_vec)
         vol_values.append(voltage_values(free_node_voltages, output_nodes))
@@ -349,35 +395,55 @@ def generate_all_combinations_xor():
 
 def main():
     num_samples = 1000
-    num_of_epochs = 20
-    scale_factor = 4
-    X, Y = prepare_moons_data(num_samples, noise=0.1, random_state=42)
+    num_of_epochs = 2
+    scale_factor = 2
+    X, Y = prepare_moons_data(num_samples, noise=0.1, random_state=41)
     #X = 2*X
     X, Y = generate_biased_inputs(X, Y, scale_factor)
+    #X, Y = generate_biased_pos_neg_inputs(X, Y, scale_factor)
+    #X, Y = generate_pos_neg_inputs(X, Y, scale_factor)
     #X, Y = generate_xor_data(num_samples)
-    input_nodes = ["VIN1", "VIN2", "VIN3", "VIN4"] #moon
-    vol_sources = ["VDC1","VDC2", "VDC3", "VDC4"] #moon
-    #input_nodes = ["VIN1", "VIN2"] 
-    #vol_sources = ["VDC1","VDC2"] 
-    i_sources = ["INUDGE_Y1", "INUDGE_Y2"]
+    
+    
+    input_nodes = ["VIN1", "VIN2", "VIN3", "VIN4", "VIN5", "VIN6", "VIN7", "VIN8"]   # Example input nodes
     output_nodes = ["V_Y1", "V_Y2"]
+
+    vol_sources = ["VDC1", "VDC2", "VDC3", "VDC4", "VDC5", "VDC6", "VDC7", "VDC8"]   # Example voltage sources
+    i_sources = ["INUDGE_Y1", "INUDGE_Y2"]
+
+    amp = 1
+    camp = 1
+    
+    v_diode_pos_values = np.linspace(0.5, 5, 5)  # Example range and number of values
+    v_diode_neg_values = -v_diode_pos_values
+    v_diode_list = list(zip(v_diode_pos_values, v_diode_neg_values))
+    
+    
+    
+    
+    
+
     #i_sources = ["INUDGE1"]
     #output_nodes = ["NET07"]
     #input_sample ="/home/filip/simulations/sample_files/eldo_samples/kendal_non_linear.cir"
-    input_sample = "/home/filip/simulations/sample_files/eldo_samples/kendal_non_linear_moons_easy.cir"
     #input_sample = "/home/filip/CMOS130/simulations/kendal_non_linear_moons/eldoD/schematic/netlist/kendal_non_linear_moons.cir"
     output_dir="/home/filip/simulations/simulations"
     create_output_directory(output_dir)
     beta = 1e-5
-    gamma = 1e-5
+    gamma = 1e-8
+    boundary = 0.5
     #beta_list = [5*beta1, 6*beta1, 7*beta1, 8*beta1, 9*beta1, 10*beta1]
 
-    gamma_list = np.linspace(1,15,10)*gamma
+    gamma_list = np.linspace(0.1,5,10)*gamma
+    scale_factor_list =np.linspace(0.5,10,15)*scale_factor
+    boundary_list = 0.5
     debug = False
+    input_sample = "/home/filip/simulations/sample_files/eldo_samples/virtuoso netlists tests/kendall_moons_cadence.cir"
     ## random or uniform
-
-    for gamma in gamma_list:
-        nudged_free_phase(X, Y, input_sample, output_dir, num_of_epochs, input_nodes, i_sources, output_nodes, vol_sources, beta, gamma, debug)    
+    for v_diode_pos, v_diode_neg in v_diode_list:
+       # nn = neural_network(input_nodes, vol_sources, i_sources, v_diode_pos, v_diode_neg, amp, camp)
+       # nn.write_to_file(input_sample)
+        nudged_free_phase(X, Y, input_sample, num_of_epochs, beta, gamma, debug, scale_factor, boundary)    
     #nudged_free_phase(X, Y, input_sample, output_dir, num_of_epochs, input_nodes, i_sources, output_nodes, vol_sources, beta1, gamma1, debug)
     
 if __name__ == "__main__":

@@ -33,6 +33,12 @@ def prepare_moons_data(n_samples, noise=0.1, random_state=42):
     #X_val, X_test, Y_val, Y_test = train_test_split(X_temp, Y_temp, test_size=0.5, random_state=random_state)
     return X, Y_column
 
+
+
+
+
+
+
     
 def generate_biased_inputs(X, Y, scale_factor):
     X_scaled = scale_factor * X
@@ -41,10 +47,21 @@ def generate_biased_inputs(X, Y, scale_factor):
     X_in = np.hstack((X_scaled, X_bias))
     return X_in, Y_scaled
 
-def main():
-    prepare_moons_data(10, 2, noise=0.1, bias = True, random_state=42)
-if __name__ == "__main__":
-    main()    
+def generate_pos_neg_inputs(X, Y, scale_factor):
+    X_pos =  X * scale_factor 
+    X_neg = -X * scale_factor
+    X_in = np.hstack((X_pos, X_neg))
+    return X_in, Y    
+
+def generate_biased_pos_neg_inputs(X, Y, scale_factor):
+    X_pos =  X * scale_factor 
+    X_neg = -X * scale_factor
+    X_bias_pos = scale_factor * (1-X_pos)
+    X_bias_neg = scale_factor * (1-X_neg)
+    X_in = np.hstack((X_pos, X_neg, X_bias_pos, X_bias_neg))
+    return X_in, Y    
+
+
 
 
 

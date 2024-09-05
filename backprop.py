@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 # Ensure plots are shown in Spyder
 
 # Generate the moons dataset
-n_samples = 1000
+n_samples = 4000
 noise = 0.1
 X, y = make_moons(n_samples=n_samples, noise=noise, random_state=42)
 
@@ -88,7 +88,7 @@ for hidden_units in hidden_units_list:
     early_stopping = EarlyStopping(monitor='val_loss', patience=2, restore_best_weights=True)
     
     # Train the model and store the history
-    history = model.fit(X_train, y_train, epochs=50, batch_size=1, validation_data=(X_test, y_test), callbacks=[early_stopping])
+    history = model.fit(X_train, y_train, epochs=10, batch_size=10, validation_data=(X_test, y_test), callbacks=[early_stopping])
     
     # Evaluate the model
     loss, accuracy = model.evaluate(X_test, y_test)

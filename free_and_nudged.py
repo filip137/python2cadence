@@ -78,9 +78,9 @@ def nudged_free_phase(X, Y, input_sample, num_of_epochs, beta, gamma, debug, sca
     eldo_process = start_eldo_simulation(sample_file, output_dir, debug=False)
     #initialize the resistances
     mode = "set_resistances"
-    low_bound = 1e1
+    low_bound = 1e2
     up_bound = 1e4
-    initialize_res(resistor_value_dict, low_bound, up_bound, uni_res = None, mode1 = "random")
+    initialize_res(resistor_value_dict, low_bound, up_bound, uni_res = 1000, mode1 = "random")
     set_eldo_initial(eldo_process, mode, resistor_value_dict, debug)
     accuracy_after_epoch = []
     batch_size = 10
@@ -240,7 +240,7 @@ def draw_grid(process, X_val, Y_val, vol_sources, debug, resistor_value_dict, no
     min1, max1 = X_val[:, 0].min() - 0.1, X_val[:, 0].max() + 0.1
     min2, max2 = X_val[:, 1].min() - 0.1, X_val[:, 1].max() + 0.1
     
-    num_points = 30
+    num_points = 40
 
     x1grid = np.linspace(min1, max1, num_points)
     x2grid = np.linspace(min2, max2, num_points)
@@ -362,7 +362,7 @@ def validate(process, X_val, Y_val, vol_sources, debug, resistor_value_dict, nod
         pred_outputs.append(predicted_output)
         true_outputs.append(Y_vec)
         vol_values.append(voltage_values(free_node_voltages, output_nodes))
-    average_voltage_values = list(zip(vol_values, Y_val))
+    average_voltage_values = list(zip(vol_values, Y_val)) #the output is 1 when the difference between the outputs is bigger than 0.5
     accuracy = calculate_accuracy(pred_outputs, true_outputs)
     #accuracy_after_epoch.append(accuracy)
     print(f"Accuracy at the end of the epoch {accuracy}")
@@ -394,29 +394,42 @@ def generate_all_combinations_xor():
 
 
 def main():
-    num_samples = 1000
-    num_of_epochs = 2
+    num_samples = 5000
+    num_of_epochs = 12
     scale_factor = 2
-    X, Y = prepare_moons_data(num_samples, noise=0.1, random_state=41)
+    X, Y = prepare_moons_data(num_samples, noise=0.1, random_state=4)
     #X = 2*X
-    X, Y = generate_biased_inputs(X, Y, scale_factor)
+    #X, Y = generate_biased_inputs(X, Y, scale_factor)
     #X, Y = generate_biased_pos_neg_inputs(X, Y, scale_factor)
+    bias = 1
+    
     #X, Y = generate_pos_neg_inputs(X, Y, scale_factor)
     #X, Y = generate_xor_data(num_samples)
-    
-    
+
+
+
+
+
+    #input_nodes = ["VIN1", "VIN2", "VIN3", "VIN4"]   # Example input nodes
+    #output_nodes = ["V_Y1", "V_Y2"] ##needs to have structure V_Y
+
+    #vol_sources = ["VDC1", "VDC2", "VDC3", "VDC4"]   # Example voltage sources
+    #i_sources = ["INUDGE_Y1", "INUDGE_Y2"]
+
     input_nodes = ["VIN1", "VIN2", "VIN3", "VIN4", "VIN5", "VIN6", "VIN7", "VIN8"]   # Example input nodes
-    output_nodes = ["V_Y1", "V_Y2"]
+    output_nodes = ["V_Y1", "V_Y2"] ##needs to have structure V_Y
 
     vol_sources = ["VDC1", "VDC2", "VDC3", "VDC4", "VDC5", "VDC6", "VDC7", "VDC8"]   # Example voltage sources
     i_sources = ["INUDGE_Y1", "INUDGE_Y2"]
 
+    v_diode_pos = 0.5
+    v_diode_neg = -0.5
     amp = 1
     camp = 1
     
-    v_diode_pos_values = np.linspace(0.5, 5, 5)  # Example range and number of values
-    v_diode_neg_values = -v_diode_pos_values
-    v_diode_list = list(zip(v_diode_pos_values, v_diode_neg_values))
+    #v_diode_pos_values = np.linspace(0.5, 5, 5)  # Example range and number of values
+    #v_diode_neg_values = -v_diode_pos_values
+    #v_diode_list = list(zip(v_diode_pos_values, v_diode_neg_values))
     
     
     
@@ -429,21 +442,29 @@ def main():
     #input_sample = "/home/filip/CMOS130/simulations/kendal_non_linear_moons/eldoD/schematic/netlist/kendal_non_linear_moons.cir"
     output_dir="/home/filip/simulations/simulations"
     create_output_directory(output_dir)
-    beta = 1e-5
-    gamma = 1e-8
-    boundary = 0.5
+    beta = 50e-5
+    gamma = 50e-7
+    boundary = 0
     #beta_list = [5*beta1, 6*beta1, 7*beta1, 8*beta1, 9*beta1, 10*beta1]
 
-    gamma_list = np.linspace(0.1,5,10)*gamma
+    gamma_list = np.linspace(0.1,5,6)*gamma
+    bias_list = np.linspace(0,3,6)*bias
     scale_factor_list =np.linspace(0.5,10,15)*scale_factor
-    boundary_list = 0.5
+    boundary_list = np.linspace(0.5,-0.5,6)
     debug = False
-    input_sample = "/home/filip/simulations/sample_files/eldo_samples/virtuoso netlists tests/kendall_moons_cadence.cir"
+    size_of_layers = [16,2] # includes the number of neurons and the number of outputs
+    input_sample = "/home/filip/simulations/sample_files/eldo_samples/python_generated_netlists/new_network.cir"
     ## random or uniform
-    for v_diode_pos, v_diode_neg in v_diode_list:
-       # nn = neural_network(input_nodes, vol_sources, i_sources, v_diode_pos, v_diode_neg, amp, camp)
-       # nn.write_to_file(input_sample)
-        nudged_free_phase(X, Y, input_sample, num_of_epochs, beta, gamma, debug, scale_factor, boundary)    
+    #for v_diode_pos, v_diode_neg in v_diode_list:
+    nn = neural_network(input_nodes, output_nodes, vol_sources, i_sources, v_diode_pos, v_diode_neg, amp, camp, size_of_layers)
+    nn.write_to_file(input_sample)
+    for bias in bias_list:
+        for boundary in boundary_list:
+            X, Y = generate_const_biased_pos_neg_inputs(X, Y, scale_factor, bias)
+            print(f"CURRENTLY USING BOUNDARY {boundary}")
+            print(f"CURRENTLY USING bias {bias}")
+
+            nudged_free_phase(X, Y, input_sample, num_of_epochs, beta, gamma, debug, scale_factor, boundary)    
     #nudged_free_phase(X, Y, input_sample, output_dir, num_of_epochs, input_nodes, i_sources, output_nodes, vol_sources, beta1, gamma1, debug)
     
 if __name__ == "__main__":

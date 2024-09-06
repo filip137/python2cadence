@@ -271,7 +271,7 @@ def loss_function_moon(Y_vec, node_voltages, output_nodes, boundary):
     neg_outputV = node_voltages[neg_output]
     
     true_output = pos_outputV - neg_outputV #this is okay
-    
+
     if true_output > boundary:
         pred_output = 1
     else:
@@ -281,11 +281,34 @@ def loss_function_moon(Y_vec, node_voltages, output_nodes, boundary):
     
     pos_loss = Y_vec - true_output #Here Y_vec will be 0 or 1
     neg_loss = -pos_loss # negative loss will be the minus of positive loss
-    losses[output_nodes[0]] = float(pos_loss)
-    losses[output_nodes[1]] = float(neg_loss)
+    losses[output_nodes[1]] = float(pos_loss)
+    losses[output_nodes[0]] = float(neg_loss)
     # Return the dictionary of losses
     
     return losses
+
+
+
+def predicted_value(node_voltages, output_nodes, boundary):
+    pos_output = output_nodes[0]
+    pos_outputV = node_voltages[pos_output]
+    neg_output = output_nodes[1]
+    neg_outputV = node_voltages[neg_output]
+    
+    true_output = pos_outputV - neg_outputV
+
+    if true_output > boundary:
+        pred_output = 1
+    else:
+        pred_output = 0
+        
+    return pred_output
+
+
+
+
+
+
 
 def calculate_accuracy(pred_outputs, true_outputs):
     correct_count = 0
@@ -300,20 +323,7 @@ def calculate_accuracy(pred_outputs, true_outputs):
     accuracy = correct_count / total * 100  # Multiply by 100 to get percentage
     return accuracy
 
-def predicted_value(node_voltages, output_nodes, boundary):
-    pos_output = output_nodes[0]
-    pos_outputV = node_voltages[pos_output]
-    neg_output = output_nodes[1]
-    neg_outputV = node_voltages[neg_output]
-    
-    true_output = pos_outputV - neg_outputV
-    
-    if true_output > boundary:
-        pred_output = 1
-    else:
-        pred_output = 0
-        
-    return pred_output
+
 
 def voltage_values(node_voltages, output_nodes):
     pos_output = output_nodes[0]

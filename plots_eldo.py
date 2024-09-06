@@ -125,7 +125,7 @@ def plot_conductance_changes(resistances_over_time, beta, gamma):
     plt.xlabel('Iteration Number')  # X-axis label
     plt.ylabel('Conductance Value (Siemens)')  # Y-axis label
     plt.grid(True)  # Enable grid for better readability
-    plt.legend(title='Resistor')  # Add a legend with a title
+    #plt.legend(title='Resistor')  # Add a legend with a title
     plt.show()  # Display the plot
 
 def plot_conductance_changes_log(resistances_over_time, beta, gamma):
@@ -161,7 +161,7 @@ def plot_conductance_changes_log(resistances_over_time, beta, gamma):
     plt.ylabel('Conductance (S)')
 
     # Add a legend
-    plt.legend()
+    #plt.legend()
 
     # Display the plot
     plt.show()
@@ -243,7 +243,7 @@ def plot_resistance_changes(resistances_over_time, beta, gamma):
     plt.xlabel('Iteration Number')  # X-axis label
     plt.ylabel('Resistance Value (Ohms)')  # Y-axis label
     plt.grid(True)  # Enable grid for better readability
-    plt.legend(title='Resistor')  # Add a legend with a title
+    #plt.legend(title='Resistor')  # Add a legend with a title
     plt.show()  # Display the plot
 
 
@@ -273,7 +273,7 @@ def plot_resistance_changes_log(resistances_over_time, beta, gamma):
     plt.ylabel('Resistance Value (Ohms)')  # Y-axis label
     plt.yscale('log')  # Set the y-axis to logarithmic scale
     plt.grid(True, which='both', linestyle='--', linewidth=0.5)  # Enable grid for better readability, compatible with log scale
-    plt.legend(title='Resistor')  # Add a legend with a title
+    #plt.legend(title='Resistor')  # Add a legend with a title
     plt.show()  # Display the plot
 
 

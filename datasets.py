@@ -64,6 +64,17 @@ def generate_biased_pos_neg_inputs(X, Y, scale_factor):
 
 
 
+def generate_const_biased_pos_neg_inputs(X, Y, scale_factor, bias):
+    X_pos =  X * scale_factor 
+    X_neg = -X * scale_factor
+    X_bias_pos = bias*np.ones((X_pos.shape[0],1))
+    X_bias_neg = -bias*np.ones((X_pos.shape[0],1))
+    X_in = np.hstack((X_pos, X_neg, X_bias_pos, X_bias_neg))
+    return X_in, Y    
+
+
+
+
 
 
 def generate_dataset(num_samples, mode):

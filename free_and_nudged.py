@@ -6,7 +6,7 @@ Created on Mon Apr 15 17:49:32 2024
 @author: filip
 """
 import numpy as np
-from sklearn.datasets import load_iris
+#from sklearn.datasets import load_iris
 import pandas as pd
 import os
 import matplotlib.pyplot as plt
@@ -85,6 +85,13 @@ def nudged_free_phase(X, Y, input_sample, num_of_epochs, beta, gamma, debug, sca
     accuracy_after_epoch = []
     batch_size = 10
     for j in range(0, num_of_epochs):
+        
+        if j > 3:
+            beta = 300e-5 * (j-2)
+            gamma = 400e-7 * (j-2)
+        
+        
+        
         
         for i in range(0, X_train.shape[0], batch_size):
         #for i in range(0, X_train.shape[0]):   
@@ -394,7 +401,7 @@ def generate_all_combinations_xor():
 
 
 def main():
-    num_samples = 5000
+    num_samples = 8000
     num_of_epochs = 12
     scale_factor = 2
     X, Y = prepare_moons_data(num_samples, noise=0.1, random_state=4)
@@ -442,17 +449,17 @@ def main():
     #input_sample = "/home/filip/CMOS130/simulations/kendal_non_linear_moons/eldoD/schematic/netlist/kendal_non_linear_moons.cir"
     output_dir="/home/filip/simulations/simulations"
     create_output_directory(output_dir)
-    beta = 50e-5
-    gamma = 50e-7
+    beta = 200e-5
+    gamma = 300e-7
     boundary = 0
     #beta_list = [5*beta1, 6*beta1, 7*beta1, 8*beta1, 9*beta1, 10*beta1]
 
     gamma_list = np.linspace(0.1,5,6)*gamma
     bias_list = np.linspace(0,3,6)*bias
     scale_factor_list =np.linspace(0.5,10,15)*scale_factor
-    boundary_list = np.linspace(0.5,-0.5,6)
+    boundary_list = np.linspace(0.3,-0.5,6)
     debug = False
-    size_of_layers = [16,2] # includes the number of neurons and the number of outputs
+    size_of_layers = [32,2] # includes the number of neurons and the number of outputs
     input_sample = "/home/filip/simulations/sample_files/eldo_samples/python_generated_netlists/new_network.cir"
     ## random or uniform
     #for v_diode_pos, v_diode_neg in v_diode_list:

@@ -1,0 +1,62 @@
+BUILD TIMESTAMP: Thu Apr  6 07:07:02 GMT 2017
+
+DATE: Saturday 07 September 2024 17:12:06.355
+THR: Thread-2(JetSocket.WorkerThread DATA)
+java.lang.NullPointerException
+	at com.mentor.jeda.jwdb.JwdbWriteInfoArray.get(JwdbWriteInfoArray.java:190)
+	at com.mentor.jeda.jwdb.JwdbWriteInfoArray.getSizeAndOffset(JwdbWriteInfoArray.java:130)
+	at com.mentor.jeda.jwdb.JwdbDiscreteWf.a(JwdbDiscreteWf.java:2063)
+	at com.mentor.jeda.jwdb.JwdbWdb.a(JwdbWdb.java:5897)
+	at com.mentor.jeda.jwdb.JwdbWdb.a(JwdbWdb.java:6332)
+	at com.mentor.jeda.jwdb.JwdbWdb.a(JwdbWdb.java:6112)
+	at com.mentor.jeda.jwdb.JwdbWdb.saveWdb(JwdbWdb.java:4816)
+	at com.mentor.jeda.jwdb.JwdbWdb.doIncrementalSave(JwdbWdb.java:5674)
+	at com.mentor.jeda.jwdb.JwdbDataChan.a(JwdbDataChan.java:1432)
+	at com.mentor.jeda.jwdb.JwdbDataChan.readDataChan(JwdbDataChan.java:400)
+	at com.mentor.jeda.jwdb.JwdbDataChan.process(JwdbDataChan.java:2425)
+	at com.mentor.jeda.comps.JetSocket$WorkerThread.run(JetSocket.java:556)
+
+DATE: Saturday 07 September 2024 17:12:39.056
+THR: Thread-2(JetSocket.WorkerThread DATA)
+java.lang.NullPointerException
+	at com.mentor.jeda.jwdb.JwdbWriteInfoArray.get(JwdbWriteInfoArray.java:190)
+	at com.mentor.jeda.jwdb.JwdbSharedUlist.f(JwdbSharedUlist.java:341)
+	at com.mentor.jeda.jwdb.JwdbSharedUlist.e(JwdbSharedUlist.java:311)
+	at com.mentor.jeda.jwdb.JwdbDiscreteWf.a(JwdbDiscreteWf.java:3131)
+	at com.mentor.jeda.jwdb.JwdbXGroup.a(JwdbXGroup.java:925)
+	at com.mentor.jeda.jwdb.JwdbWdb.a(JwdbWdb.java:9103)
+	at com.mentor.jeda.jwdb.JwdbWdb.a(JwdbWdb.java:8348)
+	at com.mentor.jeda.jwdb.JwdbWdb.a(JwdbWdb.java:7773)
+	at com.mentor.jeda.jwdb.JwdbWdb.a(JwdbWdb.java:5785)
+	at com.mentor.jeda.jwdb.JwdbWdb.a(JwdbWdb.java:6298)
+	at com.mentor.jeda.jwdb.JwdbWdb.a(JwdbWdb.java:6112)
+	at com.mentor.jeda.jwdb.JwdbWdb.saveWdb(JwdbWdb.java:4816)
+	at com.mentor.jeda.jwdb.JwdbWdb.doIncrementalSave(JwdbWdb.java:5674)
+	at com.mentor.jeda.jwdb.JwdbDataChan.a(JwdbDataChan.java:1432)
+	at com.mentor.jeda.jwdb.JwdbDataChan.readDataChan(JwdbDataChan.java:400)
+	at com.mentor.jeda.jwdb.JwdbDataChan.process(JwdbDataChan.java:2425)
+	at com.mentor.jeda.comps.JetSocket$WorkerThread.run(JetSocket.java:556)
+
+DATE: Saturday 07 September 2024 17:13:12.069
+THR: Thread-2(JetSocket.WorkerThread DATA)
+java.lang.NullPointerException
+	at com.mentor.jeda.jwdb.JwdbWriteInfoArray.get(JwdbWriteInfoArray.java:190)
+	at com.mentor.jeda.jwdb.JwdbSharedUlist.f(JwdbSharedUlist.java:341)
+	at com.mentor.jeda.jwdb.JwdbSharedUlist.e(JwdbSharedUlist.java:311)
+	at com.mentor.jeda.jwdb.JwdbDiscreteWf.a(JwdbDiscreteWf.java:3131)
+	at com.mentor.jeda.jwdb.JwdbXGroup.a(JwdbXGroup.java:925)
+	at com.mentor.jeda.jwdb.JwdbWdb.a(JwdbWdb.java:9103)
+	at com.mentor.jeda.jwdb.JwdbWdb.a(JwdbWdb.java:8348)
+	at com.mentor.jeda.jwdb.JwdbWdb.a(JwdbWdb.java:7773)
+	at com.mentor.jeda.jwdb.JwdbWdb.a(JwdbWdb.java:5785)
+	at com.mentor.jeda.jwdb.JwdbWdb.a(JwdbWdb.java:6298)
+	at com.mentor.jeda.jwdb.JwdbWdb.a(JwdbWdb.java:6112)
+	at com.mentor.jeda.jwdb.JwdbWdb.saveWdb(JwdbWdb.java:4816)
+	at com.mentor.jeda.jwdb.JwdbWdb.e(JwdbWdb.java:8699)
+	at com.mentor.jeda.jwdb.JwdbMgr.shutdown(JwdbMgr.java:10393)
+	at com.mentor.jeda.jwdb.JwdbMgr.systemExit(JwdbMgr.java:248)
+	at com.mentor.jeda.jwdb.JwdbExitMgr.a(JwdbExitMgr.java:171)
+	at com.mentor.jeda.jwdb.JwdbExitMgr.threadExiting(JwdbExitMgr.java:110)
+	at com.mentor.jeda.comps.JetSocket.decreaseNonDaemonThread(JetSocket.java:289)
+	at com.mentor.jeda.comps.JetSocket$WorkerThread.run(JetSocket.java:596)
+
